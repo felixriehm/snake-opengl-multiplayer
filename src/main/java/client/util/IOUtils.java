@@ -1,4 +1,4 @@
-package util;
+package client.util;
 /*
  * Copyright LWJGL. All rights reserved.
  * License terms: https://www.lwjgl.org/license

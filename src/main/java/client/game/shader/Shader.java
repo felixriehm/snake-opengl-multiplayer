@@ -1,4 +1,4 @@
-package shader;
+package client.game.shader;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -35,7 +35,7 @@ public class Shader {
         glShaderSource(sFragment, fragmentSource, fragmentSourceRemaining);
         glCompileShader(sFragment);
         checkCompileErrors(sFragment, "FRAGMENT");
-        // if geometry shader source code is given, also compile geometry shader
+        // if geometry client.game.shader source code is given, also compile geometry client.game.shader
         if (geometrySource != null)
         {
             gShader = glCreateShader(GL_GEOMETRY_SHADER);
@@ -43,7 +43,7 @@ public class Shader {
             glCompileShader(gShader);
             checkCompileErrors(gShader, "GEOMETRY");
         }
-        // shader program
+        // client.game.shader program
         this.Id = glCreateProgram();
         glAttachShader(this.Id, sVertex);
         glAttachShader(this.Id, sFragment);
@@ -67,7 +67,7 @@ public class Shader {
                 System.err.println(shaderLog);
             }
             if (compiled == 0) {
-                throw new AssertionError("Could not compile shader");
+                throw new AssertionError("Could not compile client.game.shader");
             }
         } else {
             int linked  = glGetProgrami(object, GL_LINK_STATUS);

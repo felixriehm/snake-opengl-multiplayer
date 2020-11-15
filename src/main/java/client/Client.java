@@ -1,9 +1,13 @@
-package snake;
+package client;
 
+import client.game.Game;
+import client.network.NetworkManager;
+import common.Configuration;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
+import java.io.IOException;
 import java.nio.*;
 
 import static org.lwjgl.glfw.Callbacks.*;
@@ -12,15 +16,17 @@ import static org.lwjgl.opengl.GL32.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-public class Snake {
+public class Client {
     private long window;
     private Game snake;
     // The Width of the screen
-    private final int SCREEN_WIDTH = 1024;
+    private final int SCREEN_WIDTH = Integer.parseInt(Configuration.getInstance().getProperty("client.window.width"));
     // The height of the screen
-    private final int SCREEN_HEIGHT = 768;
+    private final int SCREEN_HEIGHT = Integer.parseInt(Configuration.getInstance().getProperty("client.window.height"));
 
-    public void run() {
+    public void run() throws IOException {
+        NetworkManager.getInstance().run();
+
         init();
         loop();
 
@@ -59,7 +65,6 @@ public class Snake {
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE ){
-                snake.stopUpdate();
                 glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
             }
             if (key >= 0 && key < 1024)
@@ -110,8 +115,8 @@ public class Snake {
         // bindings available for use.
         GL.createCapabilities();
 
-        snake = new Game(SCREEN_WIDTH, SCREEN_HEIGHT);
-        snake.init();
+        snake = Game.getInstance();
+        snake.init(SCREEN_WIDTH, SCREEN_HEIGHT);
 
         // Set the clear color
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -133,8 +138,8 @@ public class Snake {
         }
     }
 
-    public static void main(String[] args) {
-        new Snake().run();
+    public static void main(String[] args) throws IOException {
+        new Client().run();
     }
 
 

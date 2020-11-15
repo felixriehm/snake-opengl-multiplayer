@@ -1,35 +1,19 @@
-package entity;
+package server.game.entity;
 
-import snake.Game;
 import org.joml.Random;
 import org.joml.Vector2f;
-import org.joml.Vector3f;
-import renderer.IPrimitiveRenderer;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class Food extends GameObject {
+public class Food {
     private Set<Vector2f> food = new HashSet<>();
     private Set<Vector2f> availableGridCells;
-    private Vector2f  size;
 
-    public Food(Vector2f size, Vector3f color, IPrimitiveRenderer renderer, Set<Vector2f> availableGridCells) {
-        super(color,renderer);
-        this.size = size;
+    public Food(Set<Vector2f> availableGridCells) {
         this.availableGridCells = availableGridCells;
-    }
-
-    @Override
-    public void draw() {
-        this.food.forEach(food -> super.renderer.draw(
-                new Vector2f(food.x * Game.CELL_SIZE  + Game.CELL_SIZE/2, food.y * Game.CELL_SIZE + Game.CELL_SIZE / 2 ),
-                this.size,
-                0f,
-                super.color
-        ));
     }
 
     public void spawnFood(List<Vector2f> snakeBodyList){

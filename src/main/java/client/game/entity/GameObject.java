@@ -1,7 +1,7 @@
-package entity;
+package client.game.entity;
 
 import org.joml.Vector3f;
-import renderer.IPrimitiveRenderer;
+import client.game.renderer.IPrimitiveRenderer;
 
 public abstract class GameObject {
     protected Vector3f color;

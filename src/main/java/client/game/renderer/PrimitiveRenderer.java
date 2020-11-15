@@ -1,9 +1,9 @@
-package renderer;
+package client.game.renderer;
 
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import shader.Shader;
+import client.game.shader.Shader;
 
 public class PrimitiveRenderer {
     protected Shader shader;

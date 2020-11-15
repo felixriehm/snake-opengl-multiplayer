@@ -1,10 +1,9 @@
-package renderer;
+package client.game.renderer;
 
-import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
-import shader.Shader;
+import client.game.shader.Shader;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;

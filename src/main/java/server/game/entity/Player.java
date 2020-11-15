@@ -1,36 +1,21 @@
-package entity;
+package server.game.entity;
 
+import common.game.Direction;
 import org.joml.Vector2f;
-import org.joml.Vector3f;
-import renderer.IPrimitiveRenderer;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import static snake.Game.CELL_SIZE;
-import static snake.Game.Direction;
-
-public class Player extends GameObject {
+public class Player {
     Vector2f sizeOfBodySegments, lastSegmentOfLastMove;
     LinkedList<Vector2f> body = new LinkedList();
     Direction nextDirection;
     Direction lastDirection;
 
-    public Player(Vector2f startPosition, Vector2f sizeOfBodySegments, Vector3f color, Direction startDirection, IPrimitiveRenderer renderer) {
-        super(color,renderer);
+    public Player(Vector2f startPosition, Direction startDirection) {
         this.sizeOfBodySegments = sizeOfBodySegments;
         this.body.addFirst(startPosition);
         this.nextDirection = startDirection;
-    }
-
-    @Override
-    public void draw() {
-        this.body.forEach(segment -> super.renderer.draw(
-                new Vector2f(segment.x * CELL_SIZE, segment.y * CELL_SIZE),
-                this.sizeOfBodySegments,
-                0f,
-                super.color
-        ));
     }
 
     public void setNextDirection(Direction d){

@@ -1,19 +1,16 @@
-package manager;
+package client.game.manager;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
-import shader.Shader;
+import client.game.shader.Shader;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
-import static util.IOUtils.*;
+
+import static client.util.IOUtils.*;
 
 import static org.lwjgl.opengl.GL32.glDeleteProgram;
 
@@ -74,7 +71,7 @@ public final class ResourceManager {
             gsLengths.put(0, geometryCode.remaining());
         }
 
-        // 2. now create shader object from source code
+        // 2. now create client.game.shader object from source code
         Shader shader = new Shader();
         shader.compile(vsStrings, vsLengths, fsStrings, fsLengths, gsStrings, gsLengths);
         return shader;
