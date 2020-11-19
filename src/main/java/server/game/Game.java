@@ -1,15 +1,21 @@
 package server.game;
 
+import client.network.NetworkManager;
 import common.Configuration;
 import common.game.Direction;
 import common.game.GameState;
+import common.network.GameEntitiesMsg;
+import common.network.MsgFactory;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import server.Server;
 import server.game.entity.Food;
 import server.game.entity.Player;
 
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -21,18 +27,34 @@ public class Game {
 
     private GameState state;
     private int GridX, GridY;
+    // will be modified inside Player and Food Object
     private Set availableGridCells = new HashSet();
-    private Player player;
+    private HashMap<UUID, Player> players = new HashMap<UUID, Player>();
     private Food food;
     private boolean[] keys = new boolean[1024];
     private boolean[] keysProcessed = new boolean[1024];
     private Game gameReference;
     private Timer updateTimer;
+    private boolean gameInitiated = false;
+    private int playerCount = 0;
 
-    public Game(int gridX, int gridY) {
+    private static Game instance;
+
+    private Game () {}
+
+    public static Game getInstance () {
+        if (Game.instance == null) {
+            Game.instance = new Game ();
+        }
+        return Game.instance;
+    }
+
+    public void init(int gridX, int gridY, Set<UUID> clients) {
+        this.gameInitiated = true;
         this.state = GameState.GAME_ACTIVE;
         this.GridX = gridX;
         this.GridY = gridY;
+        this.playerCount = clients.size();
 
         for (int x = 0; x < this.GridX; x++)
         {
@@ -41,60 +63,14 @@ public class Game {
                 availableGridCells.add(new Vector2f(x,y));
             }
         }
-    }
 
-    public void init() {
         gameReference = this;
 
-        this.resetGame();
-    }
+        clients.forEach(clientId -> this.players.put(clientId, new Player(this.availableGridCells, GridX, GridY)));
 
-    public void processInput(){
-        if (this.state == GameState.GAME_ACTIVE)
-        {
-            if (this.keys[GLFW_KEY_A] && (player.getSnakeBody().size() == 1 || (player.getSnakeBody().size() > 1 && player.getLastDirection() != Direction.RIGHT)))
-            {
-                player.setNextDirection(Direction.LEFT);
-            }
-            if (this.keys[GLFW_KEY_D] && (player.getSnakeBody().size() == 1 || (player.getSnakeBody().size() > 1 && player.getLastDirection() != Direction.LEFT)))
-            {
-                player.setNextDirection(Direction.RIGHT);
-            }
-            if (this.keys[GLFW_KEY_W] && (player.getSnakeBody().size() == 1 || (player.getSnakeBody().size() > 1 && player.getLastDirection() != Direction.DOWN)))
-            {
-                player.setNextDirection(Direction.UP);
-            }
-            if (this.keys[GLFW_KEY_S] && (player.getSnakeBody().size() == 1 || (player.getSnakeBody().size() > 1 && player.getLastDirection() != Direction.UP)))
-            {
-                player.setNextDirection(Direction.DOWN);
-            }
-        }
-    }
-
-    public void update()
-    {
-        if (this.state == GameState.GAME_ACTIVE)
-        {
-            // update objects
-            player.moveSnake();
-
-            // check for collisions
-            this.doCollisions();
-
-            // check loss condition
-            this.checkLossCondition();
-
-            // check win condition
-            this.checkWinCondition();
-        }
-    }
-
-    public void resetGame(){
-        Vector2f playerPos = new Vector2f(2, 2);
-        player = new Player(playerPos, Direction.RIGHT);
         // spawn food, needs to happen after Player init
         food = new Food(this.availableGridCells);
-        food.spawnFood(player.getSnakeBody());
+        food.spawnFood(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
 
         this.updateTimer = new Timer();
         updateTimer.scheduleAtFixedRate(new TimerTask() {
@@ -105,6 +81,39 @@ public class Game {
         }, 0, GAME_UPDATE_RATE);
     }
 
+    public Food getFood(){
+        return this.food;
+    }
+
+    public HashMap<UUID, Player> getPlayers(){
+        return this.players;
+    }
+
+    public boolean isInitiated(){
+        return gameInitiated;
+    }
+
+    public void update()
+    {
+        if (this.state == GameState.GAME_ACTIVE)
+        {
+            // update objects
+            players.values().forEach(player -> player.moveSnake());
+
+
+            // check for collisions
+            //this.doCollisions();
+
+            // check loss condition
+            //this.checkLossCondition();
+
+            // check win condition
+            //this.checkWinCondition();
+        }
+
+        Server.getInstance().broadcastMsg(MsgFactory.getInstance().getGameEntitiesMsg(food.getFood(), players.entrySet().stream().map(player -> player.getValue().getSnakeBody()).collect(Collectors.toList())));
+    }
+
     public void setKeys(int index, boolean value){
         this.keys[index] = value;
     }
@@ -113,7 +122,7 @@ public class Game {
         this.keysProcessed[index] = value;
     }
 
-    public void checkWinCondition() {
+    /*public void checkWinCondition() {
         if (player.getSnakeBody().size() == this.GridX * this.GridY) {
             this.stopUpdate();
             this.state = GameState.GAME_WIN;
@@ -153,7 +162,7 @@ public class Game {
             food.removeFood((Vector2f)intersectedCells.toArray()[0]);
             food.spawnFood(player.getSnakeBody());
         }
-    }
+    }*/
 
     public void stopUpdate(){
         updateTimer.cancel();

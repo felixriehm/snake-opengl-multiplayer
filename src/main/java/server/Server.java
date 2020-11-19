@@ -3,61 +3,102 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
+import client.network.NetworkManager;
 import common.Configuration;
+import common.network.BaseMsg;
+import common.network.MsgFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import server.game.Game;
 import server.network.ClientManager;
 
-public class Server {
+public class Server <T extends BaseMsg>  {
     private static final Logger logger = LogManager.getLogger(Server.class.getName());
 
     // Vector to store active clients
-    public static Vector<ClientManager> ar = new Vector<>();
+    private HashMap<UUID, ClientManager> clients = new HashMap<>();
 
-    public static final UUID uuid = UUID.randomUUID();
+    private final UUID uuid = UUID.randomUUID();
 
-    // counter for clients
-    static int i = 0;
+    private static Server instance;
 
-    public static void main(String[] args) throws IOException {
+    private Server () {}
+
+    public static Server getInstance () {
+        if (Server.instance == null) {
+            Server.instance = new Server ();
+        }
+        return Server.instance;
+    }
+
+    public void run() throws IOException {
+        MsgFactory.getInstance().init(uuid);
+
         // server is listening on port 1234
         ServerSocket ss = new ServerSocket(Integer.parseInt(Configuration.getInstance().getProperty("server.port")));
-        Socket s;
+        Socket s = null;
+        ObjectOutputStream dos = null;
+        ObjectInputStream dis = null;
 
         // running infinite loop for getting
         // client request
         while (true) {
-            // Accept the incoming request
-            s = ss.accept();
+            try {
+                // Accept the incoming request
+                s = ss.accept();
 
-            logger.debug("New client request received : " + s);
+                logger.debug("New client request received : " + s);
 
-            // obtain input and output streams
-            InputStream test = s.getInputStream();
-            ObjectOutputStream dos = new ObjectOutputStream(s.getOutputStream());
-            ObjectInputStream dis = new ObjectInputStream(s.getInputStream());
+                // obtain input and output streams
+                dos = new ObjectOutputStream(s.getOutputStream());
+                dis = new ObjectInputStream(s.getInputStream());
 
-            logger.debug("Creating a new handler for this client...");
+                logger.debug("Creating a new handler for this client...");
 
-            // Create a new handler object for handling this request.
-            ClientManager mtch = new ClientManager(s,"client " + i, dis, dos);
+                // Create a new handler object for handling this request.
+                ClientManager mtch = new ClientManager(s, dis, dos, uuid);
 
-            // Create a new Thread with this object.
-            Thread t = new Thread(mtch);
+                // Create a new Thread with this object.
+                Thread t = new Thread(mtch);
 
-            logger.debug("Adding this client to active client list");
-
-            // add this client to active clients list
-            ar.add(mtch);
-
-            // start the thread.
-            t.start();
-
-            // increment i for new client.
-            // i is used for naming only, and can be replaced
-            // by any naming scheme
-            i++;
+                // start the thread.
+                t.start();
+            } catch (Exception e){
+                s.close();
+                dis.close();
+                dos.close();
+                e.printStackTrace();
+                break;
+            }
         }
+    }
+
+    public static void main(String[] args) throws IOException {
+        new Server().run();
+    }
+
+    public void broadcastMsg(T msg) {
+        this.clients.entrySet().forEach(client -> client.getValue().sendMessage(msg));
+    }
+
+    public void sendMsgToClient() {
+
+    }
+
+    public UUID getUuid() {
+        return this.uuid;
+    }
+
+    public HashMap<UUID, ClientManager> getClients() {
+        return this.clients;
+    }
+
+    public void addClient(UUID clientId, ClientManager client){
+        this.clients.put(clientId, client);
+    }
+
+    public void removeClient(UUID clientId) {
+        logger.debug("Removing Client " + clientId);
+        this.clients.remove(clientId);
     }
 }

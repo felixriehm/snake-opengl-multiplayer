@@ -4,9 +4,11 @@ import client.game.entity.Food;
 import client.game.entity.Player;
 import client.game.manager.ResourceManager;
 import client.network.NetworkManager;
+import common.Configuration;
 import common.game.Direction;
 import common.game.GameState;
 import common.network.MoveMsg;
+import common.network.MsgFactory;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -28,12 +30,21 @@ public class Game {
     private SquareRenderer squareRenderer;
     private TriangleRenderer triangleRenderer;
     private CircleRenderer circleRenderer;
-    private LinkedList<Player> players;
+    public final Vector3f FOOD_COLOR = new Vector3f(
+            Float.parseFloat(Configuration.getInstance().getProperty("game.food.color.r")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.food.color.g")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.food.color.b")));
+    public final Vector3f GRID_COLOR = new Vector3f(
+            Float.parseFloat(Configuration.getInstance().getProperty("game.grid.color.r")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.grid.color.g")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.grid.color.b")));
+    private LinkedList<Player> players = new LinkedList<Player>();
     private Food food;
     private boolean[] keys = new boolean[1024];
     private boolean[] keysProcessed = new boolean[1024];
     private int cellSize = 64;
     private static Game instance;
+    private int playerCount;
 
 
     private Game () { }
@@ -49,8 +60,6 @@ public class Game {
         this.state = GameState.GAME_MENU;
         this.Width = width;
         this.Height = height;
-        this.GridX = 10;
-        this.GridY = 10;
 
         try{
             ResourceManager.getInstance().loadShader("src/main/java/client/game/shader/primitive-vs.glsl",
@@ -71,23 +80,48 @@ public class Game {
         // TODO: Create TextRenderer and load font
     }
 
+    public void start(int playerCount, int gridSize, GameState gameState, Set<Vector2f> food, LinkedList<LinkedList<Vector2f>> snakes){
+        this.playerCount = playerCount;
+        this.setGameState(gameState);
+        this.setGridSize(gridSize);
+        this.food = new Food(new Vector2f(cellSize, cellSize), FOOD_COLOR, circleRenderer);
+        setFood(food);
+        for (int i = 0; i < playerCount; i++) {
+            players.add(new Player(new Vector2f(cellSize, cellSize), generatePlayerColor(i) ,squareRenderer));
+        }
+        setSnakes(snakes);
+    }
+
+    private Vector3f generatePlayerColor(int i) {
+        return new Vector3f((float) i / ((float) playerCount), 1f,1f);
+    }
+
     public void processInput(){
-        if (this.state == GameState.GAME_ACTIVE)
-        {
-            if (this.keys[GLFW_KEY_A])
+        if (this.state == GameState.GAME_ACTIVE) {
+            if (this.keys[GLFW_KEY_A] && !keysProcessed[GLFW_KEY_A])
             {
-                NetworkManager.getInstance().sendMessage(new MoveMsg(Direction.LEFT, NetworkManager.getInstance().getId()));
+                NetworkManager.getInstance().sendMessage(MsgFactory.getInstance().getMoveMsg(Direction.LEFT));
+                keysProcessed[GLFW_KEY_A] = true;
             }
-            if (this.keys[GLFW_KEY_D])
+            if (this.keys[GLFW_KEY_D] && !keysProcessed[GLFW_KEY_D])
             {
-                NetworkManager.getInstance().sendMessage(new MoveMsg(Direction.RIGHT, NetworkManager.getInstance().getId()));
+                NetworkManager.getInstance().sendMessage(MsgFactory.getInstance().getMoveMsg(Direction.RIGHT));
+                keysProcessed[GLFW_KEY_D] = true;
             }
-            if (this.keys[GLFW_KEY_W])
+            if (this.keys[GLFW_KEY_W] && !keysProcessed[GLFW_KEY_W])
             {
-                NetworkManager.getInstance().sendMessage(new MoveMsg(Direction.UP, NetworkManager.getInstance().getId()));
+                NetworkManager.getInstance().sendMessage(MsgFactory.getInstance().getMoveMsg(Direction.UP));
+                keysProcessed[GLFW_KEY_W] = true;
             }
-            if (this.keys[GLFW_KEY_S]) {
-                NetworkManager.getInstance().sendMessage(new MoveMsg(Direction.DOWN, NetworkManager.getInstance().getId()));
+            if (this.keys[GLFW_KEY_S] && !keysProcessed[GLFW_KEY_S]) {
+                NetworkManager.getInstance().sendMessage(MsgFactory.getInstance().getMoveMsg(Direction.DOWN));
+                keysProcessed[GLFW_KEY_S] = true;
+            }
+        }
+        if(this.state == GameState.GAME_MENU) {
+            if (this.keys[GLFW_KEY_ENTER] && !keysProcessed[GLFW_KEY_ENTER]) {
+                NetworkManager.getInstance().sendMessage(MsgFactory.getInstance().getRequestStartGameMsg());
+                keysProcessed[GLFW_KEY_ENTER] = true;
             }
         }
     }
@@ -105,11 +139,11 @@ public class Game {
             // draw grid
             for (int x = 1; x < GridX; x++)
             {
-                squareRenderer.draw(new Vector2f((x * this.cellSize) - (GRID_LINE_WIDTH / 2), 0.f), new Vector2f(GRID_LINE_WIDTH, Height), 0.0f, new Vector3f(0.f, 0.f, 0.89f));
+                squareRenderer.draw(new Vector2f((x * this.cellSize) - (GRID_LINE_WIDTH / 2), 0.f), new Vector2f(GRID_LINE_WIDTH, Height), 0.0f, GRID_COLOR);
             }
             for (int y = 1; y < GridY; y++)
             {
-                squareRenderer.draw(new Vector2f(0.f, (y * this.cellSize) - (GRID_LINE_WIDTH / 2)), new Vector2f(Width, GRID_LINE_WIDTH), 0.0f, new Vector3f(0.f, 0.f, 0.89f));
+                squareRenderer.draw(new Vector2f(0.f, (y * this.cellSize) - (GRID_LINE_WIDTH / 2)), new Vector2f(Width, GRID_LINE_WIDTH), 0.0f, GRID_COLOR);
             }
         }
     }

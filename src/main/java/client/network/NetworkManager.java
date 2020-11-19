@@ -3,9 +3,7 @@ package client.network;
 import client.game.Game;
 import client.game.manager.ResourceManager;
 import common.Configuration;
-import common.network.BaseMsg;
-import common.network.GameSizeMsg;
-import common.network.GameStateMsg;
+import common.network.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,6 +20,7 @@ public class NetworkManager <T extends BaseMsg>
     final static int ServerPort = Integer.parseInt(Configuration.getInstance().getProperty("server.port"));
     private ObjectOutputStream dos;
     private ObjectInputStream dis;
+    private Socket s = null;
 
     private static NetworkManager instance;
 
@@ -36,24 +35,40 @@ public class NetworkManager <T extends BaseMsg>
 
     public void run() throws UnknownHostException, IOException
     {
-        Scanner scn = new Scanner(System.in);
+        MsgFactory.getInstance().init(uuid);
 
         // getting localhost ip
         InetAddress ip = InetAddress.getByName("localhost");
 
         // establish the connection
-        Socket s = new Socket(ip, ServerPort);
+        try
+        {
+            s = new Socket(ip, ServerPort);
 
-        // obtaining input and out streams
-        dos = new ObjectOutputStream(s.getOutputStream());
+            // obtaining input and out streams
+            dos = new ObjectOutputStream(s.getOutputStream());
 
-        dis = new ObjectInputStream(s.getInputStream());
+            dis = new ObjectInputStream(s.getInputStream());
 
-        new Thread(new MsgReader(dis)).run();
+            // closing resources
+        } catch(IOException e){
+            e.printStackTrace();
+            if(s == null) {
+                return;
+            }
+            s.close();
+            dos.close();
+            dis.close();
+        }
+
+        this.sendMessage((T) MsgFactory.getInstance().getRegisterMsg());
+
+        new Thread(new MsgReader(s, dis, dos,  uuid)).start();
     }
 
     public void sendMessage(T msg) {
-        new Thread(new MsgWriter<T>(msg, dos)).run();
+        logger.debug("Client: sent message: " + msg);
+        new Thread(new MsgWriter<T>(msg, dos)).start();
     }
 
     public UUID getId(){

@@ -4,6 +4,7 @@ import org.joml.Random;
 import org.joml.Vector2f;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,10 +17,10 @@ public class Food {
         this.availableGridCells = availableGridCells;
     }
 
-    public void spawnFood(List<Vector2f> snakeBodyList){
+    public void spawnFood(Set<Player> players){
         Set<Vector2f> freeCells = new HashSet<Vector2f>(availableGridCells);
-        Set<Vector2f> snakeBodySet = snakeBodyList.stream().collect(Collectors.toSet());
-        freeCells.removeAll(snakeBodySet);
+        players.forEach(player -> freeCells.removeAll(player.getSnakeBody()));
+        freeCells.removeAll(food);
 
         int size = freeCells.size();
         int item = new Random().nextInt(size);
