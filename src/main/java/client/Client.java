@@ -3,12 +3,16 @@ package client;
 import client.game.Game;
 import client.network.NetworkManager;
 import common.Configuration;
+import common.game.ai.AIController;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
 import java.io.IOException;
 import java.nio.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -24,11 +28,9 @@ public class Client {
     // The height of the screen
     private final int SCREEN_HEIGHT = Integer.parseInt(Configuration.getInstance().getProperty("client.window.height"));
 
-    public void run() throws IOException {
-        NetworkManager.getInstance().run();
-
+    public void run(List<String> args) {
         init();
-        loop();
+        loop(args);
 
         // Free the window callbacks and destroy the window
         glfwFreeCallbacks(window);
@@ -37,6 +39,22 @@ public class Client {
         // Terminate GLFW and free the error callback
         glfwTerminate();
         glfwSetErrorCallback(null).free();
+    }
+
+    public void runWithoutOpenGL(List<String> args) {
+        NetworkManager nm = new NetworkManager();
+        if(args.contains("ai")) {
+            snake = new Game(nm, new AIController(), false);
+        } else {
+            snake = new Game(nm, null, false);
+        }
+        try {
+            nm.run(snake);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        snake.init(0, 0);
     }
 
     private void init() {
@@ -107,7 +125,7 @@ public class Client {
         glfwShowWindow(window);
     }
 
-    private void loop() {
+    private void loop(List<String> args) {
         // This line is critical for LWJGL's interoperation with GLFW's
         // OpenGL context, or any context that is managed externally.
         // LWJGL detects the context that is current in the current thread,
@@ -115,7 +133,18 @@ public class Client {
         // bindings available for use.
         GL.createCapabilities();
 
-        snake = Game.getInstance();
+        NetworkManager nm = new NetworkManager();
+        if(args.contains("ai")) {
+            snake = new Game(nm, new AIController(), true);
+        } else {
+            snake = new Game(nm, null, true);
+        }
+        try {
+            nm.run(snake);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         snake.init(SCREEN_WIDTH, SCREEN_HEIGHT);
 
         // Set the clear color
@@ -138,8 +167,17 @@ public class Client {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        new Client().run();
+    public static void main(String[] args) {
+        ArrayList<String> arguments = new ArrayList<>(Arrays.asList(args));
+        if(arguments.size() == 0) {
+            arguments.add("openGL");
+        }
+
+        if(arguments.contains("openGL")){
+            new Client().run(arguments);
+        } else {
+            new Client().runWithoutOpenGL(arguments);
+        }
     }
 
 

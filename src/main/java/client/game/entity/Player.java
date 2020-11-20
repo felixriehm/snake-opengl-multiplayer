@@ -12,14 +12,14 @@ public class Player extends GameObject {
     Vector2f sizeOfBodySegments;
     LinkedList<Vector2f> body = new LinkedList();
 
-    public Player(Vector2f sizeOfBodySegments, Vector3f color, IPrimitiveRenderer renderer) {
-        super(color,renderer);
+    public Player(Vector2f sizeOfBodySegments, Vector3f color, IPrimitiveRenderer renderer, Game game) {
+        super(color,renderer, game);
         this.sizeOfBodySegments = sizeOfBodySegments;
     }
 
     @Override
     public void draw() {
-        int cellSize = Game.getInstance().getCellSize();
+        int cellSize = super.game.getCellSize();
         this.body.forEach(segment -> super.renderer.draw(
                 new Vector2f(segment.x * cellSize, segment.y * cellSize),
                 this.sizeOfBodySegments,

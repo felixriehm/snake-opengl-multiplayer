@@ -9,7 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 public class MsgWriter <T extends BaseMsg> implements Runnable {
-    private static final Logger logger = LogManager.getLogger(NetworkManager.class.getName());
+    private static final Logger logger = LogManager.getLogger(MsgWriter.class.getName());
 
     private final ObjectOutputStream dos;
     private final T msg;
@@ -22,6 +22,7 @@ public class MsgWriter <T extends BaseMsg> implements Runnable {
     @Override
     public void run() {
         try {
+            //TODO LOCK
             dos.writeUnshared(msg);
         } catch (IOException e) {
             e.printStackTrace();

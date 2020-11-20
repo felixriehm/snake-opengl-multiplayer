@@ -21,21 +21,16 @@ public class NetworkManager <T extends BaseMsg>
     private ObjectOutputStream dos;
     private ObjectInputStream dis;
     private Socket s = null;
+    private Game game = null;
+    private MsgFactory msgFactory;
 
-    private static NetworkManager instance;
+    public NetworkManager () {}
 
-    private NetworkManager () {}
-
-    public static NetworkManager getInstance () {
-        if (NetworkManager.instance == null) {
-            NetworkManager.instance = new NetworkManager ();
-        }
-        return NetworkManager.instance;
-    }
-
-    public void run() throws UnknownHostException, IOException
+    public void run(Game game) throws UnknownHostException, IOException
     {
-        MsgFactory.getInstance().init(uuid);
+        this.game = game;
+        msgFactory = new MsgFactory();
+        msgFactory.init(uuid);
 
         // getting localhost ip
         InetAddress ip = InetAddress.getByName("localhost");
@@ -61,14 +56,18 @@ public class NetworkManager <T extends BaseMsg>
             dis.close();
         }
 
-        this.sendMessage((T) MsgFactory.getInstance().getRegisterMsg());
+        this.sendMessage((T) msgFactory.getRegisterMsg());
 
-        new Thread(new MsgReader(s, dis, dos,  uuid)).start();
+        new Thread(new MsgReader(s, dis, dos,  uuid, game)).start();
     }
 
     public void sendMessage(T msg) {
         logger.debug("Client: sent message: " + msg);
         new Thread(new MsgWriter<T>(msg, dos)).start();
+    }
+
+    public MsgFactory getMsgFactory() {
+        return this.msgFactory;
     }
 
     public UUID getId(){

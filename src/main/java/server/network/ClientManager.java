@@ -13,7 +13,7 @@ import java.util.*;
 import java.net.*;
 
 public class ClientManager <T extends BaseMsg> implements Runnable {
-    private static final Logger logger = LogManager.getLogger(Server.class.getName());
+    private static final Logger logger = LogManager.getLogger(ClientManager.class.getName());
 
     final ObjectInputStream dis;
     final ObjectOutputStream dos;
@@ -21,15 +21,18 @@ public class ClientManager <T extends BaseMsg> implements Runnable {
     boolean isloggedin;
     private UUID serverId;
     private UUID clientId;
+    private Server server;
 
     // constructor
     public ClientManager(Socket s,
-                         ObjectInputStream dis, ObjectOutputStream dos, UUID serverId) {
+                         ObjectInputStream dis, ObjectOutputStream dos, UUID serverId, Server server) {
+        // TODO: Lock
         this.dis = dis;
         this.dos = dos;
         this.s = s;
         this.isloggedin=true;
         this.serverId = serverId;
+        this.server = server;
     }
 
     @Override
@@ -48,19 +51,19 @@ public class ClientManager <T extends BaseMsg> implements Runnable {
                 if (received instanceof RegisterMsg) {
                     RegisterMsg message = (RegisterMsg) received;
                     clientId = message.getSender();
-                    RegisterMsgHandler mtch = new RegisterMsgHandler(this, message, dos);
+                    RegisterMsgHandler mtch = new RegisterMsgHandler(this, message, dos, server);
                     Thread t = new Thread(mtch);
                     t.start();
                 }
 
                 if (received instanceof RequestStartGameMsg) {
-                    RequestStartGameHandler mtch = new RequestStartGameHandler(dos);
+                    RequestStartGameHandler mtch = new RequestStartGameHandler(dos, server);
                     Thread t = new Thread(mtch);
                     t.start();
                 }
 
                 if (received instanceof MoveMsg) {
-                    MoveMsgHandler mtch = new MoveMsgHandler((MoveMsg) received, dos);
+                    MoveMsgHandler mtch = new MoveMsgHandler((MoveMsg) received, dos, server);
                     Thread t = new Thread(mtch);
                     t.start();
                 }
@@ -81,7 +84,7 @@ public class ClientManager <T extends BaseMsg> implements Runnable {
             this.s.close();
             this.dis.close();
             this.dos.close();
-            Server.getInstance().removeClient(clientId);
+            this.server.removeClient(clientId);
 
         }catch(IOException e){
             e.printStackTrace();
@@ -91,6 +94,10 @@ public class ClientManager <T extends BaseMsg> implements Runnable {
     public void sendMessage(T msg) {
         logger.debug("Server " + serverId + ": sent message");
         logger.debug(msg);
+        if (msg instanceof GameUpdateMsg) {
+            logger.debug(((GameUpdateMsg) msg).getFood());
+            logger.debug(((GameUpdateMsg) msg).getSnakes());
+        }
         try {
             dos.writeUnshared(msg);
         } catch (IOException e) {

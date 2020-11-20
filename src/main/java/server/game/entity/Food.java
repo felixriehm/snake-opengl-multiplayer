@@ -35,8 +35,8 @@ public class Food {
         }
     }
 
-    public void removeFood(Vector2f foodToRemove){
-        this.food.remove(foodToRemove);
+    public void removeFood(Set<Vector2f> foodToRemove){
+        this.food.removeAll(foodToRemove);
     }
 
     public Set<Vector2f> getFood(){

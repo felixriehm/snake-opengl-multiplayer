@@ -1,9 +1,10 @@
 package common.network;
 
-import common.game.GameState;
+import common.game.ClientGameState;
 import org.joml.Vector2f;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -12,15 +13,17 @@ public class InitGameMsg extends BaseMsg {
     private static final long serialVersionUID = 1L;
 
     private final int playerCount;
-    private final int gridSize;
-    private final GameState gameState;
+    private final int gridX;
+    private final int gridY;
+    private final ClientGameState gameState;
     private final Set<Vector2f> food;
-    private final LinkedList<LinkedList<Vector2f>> snakes;
+    private final List<List<Vector2f>> snakes;
 
-    public InitGameMsg(int playerCount, int gridSize, GameState gameState, Set<Vector2f> food, LinkedList<LinkedList<Vector2f>> snakes, UUID sender){
+    public InitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, List<List<Vector2f>> snakes, UUID sender){
         super(sender);
         this.playerCount = playerCount;
-        this.gridSize = gridSize;
+        this.gridX = gridX;
+        this.gridY = gridY;
         this.gameState = gameState;
         this.food = food;
         this.snakes = snakes;
@@ -34,11 +37,15 @@ public class InitGameMsg extends BaseMsg {
         return serialVersionUID;
     }
 
-    public int getGridSize() {
-        return gridSize;
+    public int getGridX() {
+        return gridX;
     }
 
-    public GameState getGameState() {
+    public int getGridY() {
+        return gridY;
+    }
+
+    public ClientGameState getGameState() {
         return gameState;
     }
 
@@ -46,7 +53,7 @@ public class InitGameMsg extends BaseMsg {
         return food;
     }
 
-    public LinkedList<LinkedList<Vector2f>> getSnakes() {
+    public List<List<Vector2f>> getSnakes() {
         return snakes;
     }
 }

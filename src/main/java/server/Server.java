@@ -17,22 +17,16 @@ public class Server <T extends BaseMsg>  {
 
     // Vector to store active clients
     private HashMap<UUID, ClientManager> clients = new HashMap<>();
+    private MsgFactory msgFactory;
+    private Game game;
 
     private final UUID uuid = UUID.randomUUID();
 
-    private static Server instance;
-
-    private Server () {}
-
-    public static Server getInstance () {
-        if (Server.instance == null) {
-            Server.instance = new Server ();
-        }
-        return Server.instance;
-    }
+    public Server () {}
 
     public void run() throws IOException {
-        MsgFactory.getInstance().init(uuid);
+        msgFactory = new MsgFactory();
+        msgFactory.init(uuid);
 
         // server is listening on port 1234
         ServerSocket ss = new ServerSocket(Integer.parseInt(Configuration.getInstance().getProperty("server.port")));
@@ -56,7 +50,7 @@ public class Server <T extends BaseMsg>  {
                 logger.debug("Creating a new handler for this client...");
 
                 // Create a new handler object for handling this request.
-                ClientManager mtch = new ClientManager(s, dis, dos, uuid);
+                ClientManager mtch = new ClientManager(s, dis, dos, uuid, this);
 
                 // Create a new Thread with this object.
                 Thread t = new Thread(mtch);
@@ -85,12 +79,24 @@ public class Server <T extends BaseMsg>  {
 
     }
 
+    public MsgFactory getMsgFactory(){
+        return this.msgFactory;
+    }
+
     public UUID getUuid() {
         return this.uuid;
     }
 
     public HashMap<UUID, ClientManager> getClients() {
         return this.clients;
+    }
+
+    public void setGame(Game game) {
+        this.game = game;
+    }
+
+    public Game getGame() {
+        return game;
     }
 
     public void addClient(UUID clientId, ClientManager client){

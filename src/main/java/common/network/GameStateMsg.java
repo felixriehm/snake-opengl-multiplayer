@@ -1,20 +1,20 @@
 package common.network;
 
-import common.game.GameState;
+import common.game.ClientGameState;
 
 import java.util.UUID;
 
 public class GameStateMsg extends BaseMsg{
     private static final long serialVersionUID = 1L;
 
-    private final GameState gameState;
+    private final ClientGameState clientGameState;
 
-    public GameStateMsg(GameState gameState, UUID sender) {
+    public GameStateMsg(ClientGameState clientGameState, UUID sender) {
         super(sender);
-        this.gameState = gameState;
+        this.clientGameState = clientGameState;
     }
 
-    public GameState getGameState() {
-        return gameState;
+    public ClientGameState getClientGameState() {
+        return clientGameState;
     }
 }

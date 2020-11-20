@@ -1,46 +1,32 @@
 package common.network;
 
+import common.game.ClientGameState;
 import common.game.Direction;
-import common.game.GameState;
 import org.joml.Vector2f;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class MsgFactory {
-
-    private static MsgFactory instance;
     private UUID networkId;
 
-    private MsgFactory () {}
-
-    public static MsgFactory getInstance () {
-        if (MsgFactory.instance == null) {
-            MsgFactory.instance = new MsgFactory ();
-        }
-        return MsgFactory.instance;
-    }
+    public MsgFactory () {}
 
     public void init (UUID networkId) {
         this.networkId = networkId;
     }
 
-    public GameEntitiesMsg getGameEntitiesMsg(Set<Vector2f> food, List<List<Vector2f>> snakes){
-        return new GameEntitiesMsg(food, snakes, networkId);
+    public GameUpdateMsg getGameEntitiesMsg(Set<Vector2f> food, List<List<Vector2f>> snakes, int gridX, int gridY){
+        Set<Vector2f> foodCopy = new HashSet<>(food);
+        List<List<Vector2f>> snakesCopy = new LinkedList();
+        for (int i = 0; i < snakes.size(); i++) {
+            snakesCopy.add(new LinkedList<>(snakes.get(i)));
+        }
+
+        return new GameUpdateMsg(foodCopy, snakesCopy, networkId, gridX, gridY);
     }
 
-    public GameStateMsg getGameStateMsg(GameState gameState){
+    public GameStateMsg getGameStateMsg(ClientGameState gameState){
         return new GameStateMsg(gameState, networkId);
-    }
-
-    public GameSizeMsg getGameSizeMsg(int gridSize){
-        return new GameSizeMsg(gridSize, networkId);
-    }
-
-    public JoinGameMsg getJoinGameMsg(){
-        return new JoinGameMsg(networkId);
     }
 
     public RequestStartGameMsg getRequestStartGameMsg(){
@@ -51,8 +37,14 @@ public class MsgFactory {
         return new MoveMsg(direction, networkId);
     }
 
-    public InitGameMsg getInitGameMsg(int playerCount, int gridSize, GameState gameState, Set<Vector2f> food, LinkedList<LinkedList<Vector2f>> snakes){
-        return new InitGameMsg(playerCount, gridSize,gameState,food,snakes, networkId);
+    public InitGameMsg getInitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, LinkedList<LinkedList<Vector2f>> snakes){
+        Set<Vector2f> foodCopy = new HashSet<>(food);
+        List<List<Vector2f>> snakesCopy = new LinkedList();
+        for (int i = 0; i < snakes.size(); i++) {
+            snakesCopy.add(new LinkedList<>(snakes.get(i)));
+        }
+
+        return new InitGameMsg(playerCount, gridX, gridY, gameState,foodCopy,snakesCopy, networkId);
     }
 
     public RegisterMsg getRegisterMsg(){
