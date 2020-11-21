@@ -67,10 +67,6 @@ public class ClientManager <T extends BaseMsg> implements Runnable {
                     Thread t = new Thread(mtch);
                     t.start();
                 }
-
-                if (received instanceof LogoutMsg) {
-                    break;
-                }
             } catch (IOException e) {
                 e.printStackTrace();
                 break;

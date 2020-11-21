@@ -19,7 +19,7 @@ public class Player {
     Direction lastDirection;
 
     public Player(Set<Vector2f> freeCells, int gridX, int gridY) {
-        this.nextDirection = Direction.values()[new Random().nextInt(Direction.values().length)];
+        this.nextDirection = Direction.NONE;
 
         int size = freeCells.size();
         if(size == 0){
@@ -49,6 +49,11 @@ public class Player {
 
     public void moveSnake(){
         if(!this.body.isEmpty()){
+            if(body.size() > 1) {
+                if(this.nextDirection == this.lastDirection.opposite()) {
+                    this.nextDirection = this.nextDirection.opposite();
+                }
+            }
             this.lastDirection = this.nextDirection;
             Vector2f lastSegment = this.body.getLast();
             this.lastSegmentOfLastMove = new Vector2f(lastSegment.x, lastSegment.y);

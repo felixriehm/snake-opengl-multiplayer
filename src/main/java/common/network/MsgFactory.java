@@ -2,6 +2,7 @@ package common.network;
 
 import common.game.ClientGameState;
 import common.game.Direction;
+import javafx.util.Pair;
 import org.joml.Vector2f;
 
 import java.util.*;
@@ -15,14 +16,10 @@ public class MsgFactory {
         this.networkId = networkId;
     }
 
-    public GameUpdateMsg getGameEntitiesMsg(Set<Vector2f> food, List<List<Vector2f>> snakes, int gridX, int gridY){
+    public GameUpdateMsg getGameEntitiesMsg(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, int gridX, int gridY){
         Set<Vector2f> foodCopy = new HashSet<>(food);
-        List<List<Vector2f>> snakesCopy = new LinkedList();
-        for (int i = 0; i < snakes.size(); i++) {
-            snakesCopy.add(new LinkedList<>(snakes.get(i)));
-        }
 
-        return new GameUpdateMsg(foodCopy, snakesCopy, networkId, gridX, gridY);
+        return new GameUpdateMsg(foodCopy, snakes, networkId, gridX, gridY);
     }
 
     public GameStateMsg getGameStateMsg(ClientGameState gameState){
@@ -37,22 +34,22 @@ public class MsgFactory {
         return new MoveMsg(direction, networkId);
     }
 
-    public InitGameMsg getInitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, LinkedList<LinkedList<Vector2f>> snakes){
+    public InitGameMsg getInitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes){
         Set<Vector2f> foodCopy = new HashSet<>(food);
-        List<List<Vector2f>> snakesCopy = new LinkedList();
-        for (int i = 0; i < snakes.size(); i++) {
-            snakesCopy.add(new LinkedList<>(snakes.get(i)));
-        }
 
-        return new InitGameMsg(playerCount, gridX, gridY, gameState,foodCopy,snakesCopy, networkId);
+        return new InitGameMsg(playerCount, gridX, gridY, gameState,foodCopy, snakes, networkId);
     }
 
     public RegisterMsg getRegisterMsg(){
         return new RegisterMsg(networkId);
     }
 
-    public LogoutMsg getLogoutMsg(){
-        return new LogoutMsg(networkId);
+    public ExitGameMsg getExitGameMsg(){
+        return new ExitGameMsg(networkId);
+    }
+
+    public EnterGameMsg getEnterGameMsg(){
+        return new EnterGameMsg(networkId);
     }
 
 }

@@ -42,4 +42,16 @@ public class Food {
     public Set<Vector2f> getFood(){
         return this.food;
     }
+
+    public void setAvailableGridCells(Set<Vector2f> availableGridCells) {
+        this.availableGridCells = availableGridCells;
+    }
+
+    public void setFood(Set<Vector2f> food){
+        this.food = food;
+    }
+
+    public void removeFood(Vector2f food) {
+        this.food.remove(food);
+    }
 }

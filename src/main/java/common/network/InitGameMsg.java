@@ -1,12 +1,11 @@
 package common.network;
 
 import common.game.ClientGameState;
+import common.game.Direction;
+import javafx.util.Pair;
 import org.joml.Vector2f;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class InitGameMsg extends BaseMsg {
 
@@ -17,9 +16,9 @@ public class InitGameMsg extends BaseMsg {
     private final int gridY;
     private final ClientGameState gameState;
     private final Set<Vector2f> food;
-    private final List<List<Vector2f>> snakes;
+    private final HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes;
 
-    public InitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, List<List<Vector2f>> snakes, UUID sender){
+    public InitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, UUID sender){
         super(sender);
         this.playerCount = playerCount;
         this.gridX = gridX;
@@ -53,7 +52,7 @@ public class InitGameMsg extends BaseMsg {
         return food;
     }
 
-    public List<List<Vector2f>> getSnakes() {
+    public HashMap<UUID, Pair<List<Vector2f>, Direction>> getSnakes() {
         return snakes;
     }
 }

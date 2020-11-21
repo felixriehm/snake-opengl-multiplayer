@@ -10,11 +10,12 @@ import java.util.Set;
 
 public class Player extends GameObject {
     Vector2f sizeOfBodySegments;
-    LinkedList<Vector2f> body = new LinkedList();
+    LinkedList<Vector2f> body;
 
-    public Player(Vector2f sizeOfBodySegments, Vector3f color, IPrimitiveRenderer renderer, Game game) {
+    public Player(Vector2f sizeOfBodySegments, Vector3f color, IPrimitiveRenderer renderer, Game game, LinkedList<Vector2f> body) {
         super(color,renderer, game);
         this.sizeOfBodySegments = sizeOfBodySegments;
+        this.body = body;
     }
 
     @Override
@@ -28,7 +29,11 @@ public class Player extends GameObject {
         ));
     }
 
-    public void setBody(LinkedList<Vector2f> body) {
-        this.body = body;
+    public LinkedList<Vector2f> getSnakeBody() {
+        return body;
+    }
+
+    public Vector2f getSnakeHead() {
+        return body.getFirst();
     }
 }

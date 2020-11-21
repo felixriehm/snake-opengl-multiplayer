@@ -1,7 +1,10 @@
 package common.network;
 
+import common.game.Direction;
+import javafx.util.Pair;
 import org.joml.Vector2f;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -10,11 +13,11 @@ public class GameUpdateMsg extends BaseMsg{
     private static final long serialVersionUID = 1L;
 
     private final Set<Vector2f> food;
-    private final List<List<Vector2f>> snakes;
+    private final HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes;
     private final int gridX;
     private final int gridY;
 
-    public GameUpdateMsg(Set<Vector2f> food, List<List<Vector2f>> snakes, UUID sender, int gridX, int gridY) {
+    public GameUpdateMsg(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, UUID sender, int gridX, int gridY) {
         super(sender);
         this.food = food;
         this.snakes = snakes;
@@ -26,7 +29,7 @@ public class GameUpdateMsg extends BaseMsg{
         return food;
     }
 
-    public List<List<Vector2f>> getSnakes() {
+    public HashMap<UUID, Pair<List<Vector2f>, Direction>> getSnakes() {
         return snakes;
     }
 

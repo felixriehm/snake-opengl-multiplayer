@@ -12,18 +12,23 @@ import common.game.ai.AIController;
 import common.network.MoveMsg;
 import common.network.MsgFactory;
 import common.network.RequestStartGameMsg;
+import javafx.util.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import client.game.shader.Shader;
 
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.lwjgl.glfw.GLFW.*;
 
 public class Game {
+    private static final Logger logger = LogManager.getLogger(Game.class.getName());
+
     public static final int GRID_LINE_WIDTH = 2;
     private final NetworkManager networkManager;
     private final AIController aiController;
@@ -34,6 +39,15 @@ public class Game {
     private IPrimitiveRenderer squareRenderer;
     private IPrimitiveRenderer triangleRenderer;
     private IPrimitiveRenderer circleRenderer;
+    private Direction lastDirection;
+    public final Vector3f PLAYER_COLOR = new Vector3f(
+            Float.parseFloat(Configuration.getInstance().getProperty("game.player.color.r")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.player.color.g")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.player.color.b")));
+    public final Vector3f ENEMY_COLOR = new Vector3f(
+            Float.parseFloat(Configuration.getInstance().getProperty("game.enemy.color.r")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.enemy.color.g")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.enemy.color.b")));
     public final Vector3f FOOD_COLOR = new Vector3f(
             Float.parseFloat(Configuration.getInstance().getProperty("game.food.color.r")),
             Float.parseFloat(Configuration.getInstance().getProperty("game.food.color.g")),
@@ -42,7 +56,7 @@ public class Game {
             Float.parseFloat(Configuration.getInstance().getProperty("game.grid.color.r")),
             Float.parseFloat(Configuration.getInstance().getProperty("game.grid.color.g")),
             Float.parseFloat(Configuration.getInstance().getProperty("game.grid.color.b")));
-    private LinkedList<Player> players = new LinkedList<Player>();
+    private HashMap<UUID, Player> players = new HashMap<>();
     private Food food;
     private boolean[] keys = new boolean[1024];
     private boolean[] keysProcessed = new boolean[1024];
@@ -82,22 +96,33 @@ public class Game {
         }
     }
 
-    public void start(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, LinkedList<LinkedList<Vector2f>> snakes){
+    public void start(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes){
         this.playerCount = playerCount;
         this.setGameState(gameState);
         this.setGridSize(gridX, gridY);
-        // TODO: inside update init Food and Player new with given data and new cellSize
         // on server side remove players from list
-        this.food = new Food(new Vector2f(cellSize, cellSize), FOOD_COLOR, circleRenderer, this);
+        this.lastDirection = snakes.get(networkManager.getId()).getValue();
         setFood(food);
-        for (int i = 0; i < playerCount; i++) {
-            players.add(new Player(new Vector2f(cellSize, cellSize), generatePlayerColor(i) ,squareRenderer, this));
-        }
-        setSnakes(snakes);
+        setPlayers(snakes);
     }
 
-    private Vector3f generatePlayerColor(int i) {
-        return new Vector3f((float) i / ((float) playerCount), 1f,1f);
+    private void setPlayers(HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes) {
+        players = new HashMap<>();
+        snakes.entrySet().forEach(snake -> this.players.put(snake.getKey(),
+                new Player(new Vector2f(cellSize, cellSize),
+                        generatePlayerColor(snake.getKey()) ,squareRenderer, this, (LinkedList) snake.getValue().getKey())));
+    }
+
+    private void setFood(Set<Vector2f> food) {
+        this.food = new Food(new Vector2f(cellSize, cellSize), FOOD_COLOR, circleRenderer, this);
+        this.food.setFood(food);
+    }
+
+    private Vector3f generatePlayerColor(UUID id) {
+        if(id.equals(networkManager.getId())) {
+            return PLAYER_COLOR;
+        }
+        return ENEMY_COLOR;
     }
 
     public void processInput(){
@@ -122,11 +147,10 @@ public class Game {
                 keysProcessed[GLFW_KEY_S] = true;
             }
         }
-        if(this.state == ClientGameState.GAME_MENU) {
-            if (this.keys[GLFW_KEY_ENTER] && !keysProcessed[GLFW_KEY_ENTER]) {
-                networkManager.sendMessage(msgFactory.getRequestStartGameMsg());
-                keysProcessed[GLFW_KEY_ENTER] = true;
-            }
+
+        if (this.keys[GLFW_KEY_ENTER] && !keysProcessed[GLFW_KEY_ENTER]) {
+            networkManager.sendMessage(msgFactory.getRequestStartGameMsg());
+            keysProcessed[GLFW_KEY_ENTER] = true;
         }
     }
 
@@ -134,7 +158,7 @@ public class Game {
         if (this.state == ClientGameState.GAME_ACTIVE)
         {
             if(players != null) {
-                players.forEach(player -> player.draw());
+                players.values().forEach(player -> player.draw());
             }
             if(food != null) {
                 food.draw();
@@ -170,22 +194,23 @@ public class Game {
         this.keysProcessed[index] = value;
     }
 
-    private void setFood(Set<Vector2f> food){
-        this.food.setFood(food);
-    }
-    private void setSnakes(LinkedList<LinkedList<Vector2f>> players){
-        for (int i = 0; i < players.size(); i++) {
-            this.players.get(i).setBody(players.get(i));
-        }
-    }
 
-    public void update(Set<Vector2f> food, LinkedList<LinkedList<Vector2f>> players, int gridX, int gridY){
+    public void update(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> players, int gridX, int gridY){
+        if(players.containsKey(networkManager.getId())) {
+            this.lastDirection = players.get(networkManager.getId()).getValue();
+        }
         setGridSize(gridX, gridY);
         setFood(food);
-        setSnakes(players);
+        setPlayers(players);
 
-        if(aiController != null) {
-            Direction nextDirection = aiController.getNextMove();
+        if(aiController != null && this.players.containsKey(networkManager.getId())) {
+            Set<LinkedList<Vector2f>> enemies = this.players.entrySet().stream()
+                    .filter(p -> p.getKey() != networkManager.getId())
+                    .map(player -> player.getValue().getSnakeBody())
+                    .collect(Collectors.toCollection(HashSet::new));
+            LinkedList<Vector2f> player = this.players.get(networkManager.getId()).getSnakeBody();
+
+            Direction nextDirection = aiController.getNextMove(this.food.getFood(),enemies,player,this.lastDirection, this.GridX, this.GridY);
             networkManager.sendMessage(msgFactory.getMoveMsg(nextDirection));
         }
     }

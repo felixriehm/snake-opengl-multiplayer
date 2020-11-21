@@ -1,13 +1,15 @@
 package server.network.msg;
 
 import common.game.ClientGameState;
+import common.game.Direction;
+import javafx.util.Pair;
 import org.joml.Vector2f;
 import server.Server;
 import server.game.Game;
+import server.game.entity.Player;
 
 import java.io.ObjectOutputStream;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 public class RequestStartGameHandler implements Runnable {
 
@@ -21,15 +23,18 @@ public class RequestStartGameHandler implements Runnable {
 
     @Override
     public void run() {
-        int gridSize = server.getClients().size() * 10;
+        if(server.getGame() != null) {
+            server.getGame().stopUpdate();
+        }
+
+        int gridSize = (server.getClients().size() * 10) / 2;
         // TODO: LOCK
         server.setGame(new Game());
         server.getGame().init(gridSize, gridSize, server.getClients().keySet(), server);
 
         Set<Vector2f> food = server.getGame().getFood().getFood();
-        LinkedList<LinkedList<Vector2f>> players = new LinkedList<LinkedList<Vector2f>>();
-        server.getGame().getPlayers().values().forEach(player -> players.add((LinkedList) player.getSnakeBody()));
 
-        server.broadcastMsg(server.getMsgFactory().getInitGameMsg(server.getClients().size(), gridSize, gridSize, ClientGameState.GAME_ACTIVE, food, players));
+        server.broadcastMsg(server.getMsgFactory().getInitGameMsg(server.getClients().size(),
+                gridSize, gridSize, ClientGameState.GAME_ACTIVE, food, server.getGame().getPlayersInfo()));
     }
 }

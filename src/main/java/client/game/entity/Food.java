@@ -31,4 +31,8 @@ public class Food extends GameObject {
     public void setFood(Set<Vector2f> food) {
         this.food = food;
     }
+
+    public Set<Vector2f> getFood() {
+        return this.food;
+    }
 }
