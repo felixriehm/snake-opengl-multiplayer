@@ -35,6 +35,7 @@ public class RequestStartGameHandler implements Runnable {
         Set<Vector2f> food = server.getGame().getFood().getFood();
 
         server.broadcastMsg(server.getMsgFactory().getInitGameMsg(server.getClients().size(),
-                gridSize, gridSize, ClientGameState.GAME_ACTIVE, food, server.getGame().getPlayersInfo()));
+                gridSize, gridSize, ClientGameState.GAME_ACTIVE, food, server.getGame().getPlayersInfo(),
+                server.getGame().getWorldEventCountdown()));
     }
 }

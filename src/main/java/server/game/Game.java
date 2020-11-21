@@ -1,6 +1,5 @@
 package server.game;
 
-import client.network.NetworkManager;
 import common.Configuration;
 import common.game.ClientGameState;
 import common.game.Direction;
@@ -24,7 +23,7 @@ public class Game {
     public static final Vector2f PLAYER_SIZE = new Vector2f(512.0f, 100.0f);
     public static final Vector2f PLAYER_VELOCITY = new Vector2f(500.0f, 500.0f);
     public static final int GAME_UPDATE_RATE = Integer.parseInt(Configuration.getInstance().getProperty("game.update-rate"));
-    public static final int GAME_WORLD_EVENT_TRIGGER = Integer.parseInt(Configuration.getInstance().getProperty("game.world-event.trigger.moves"));
+    public static final int GAME_WORLD_EVENT_COUNTDOWN = Integer.parseInt(Configuration.getInstance().getProperty("game.world-event.countdown"));
     public static final int GAME_WORLD_EVENT_GRID_DECREASE = Integer.parseInt(Configuration.getInstance().getProperty("game.world-event.grid-decrease"));
     public static final boolean GAME_WORLD_EVENT_ENABLED = Boolean.parseBoolean(Configuration.getInstance().getProperty("game.world-event.enabled"));
     private ServerGameState state;
@@ -40,14 +39,14 @@ public class Game {
     private Game gameReference;
     private Timer updateTimer;
     private boolean gameInitiated = false;
-    private int worldEventCounter;
+    private int worldEventCountdown = GAME_WORLD_EVENT_COUNTDOWN;
     private int playerCount = 0;
 
     public Game () {}
 
     public void init(int gridX, int gridY, Set<UUID> clients, Server server) {
         this.server = server;
-        this.worldEventCounter = 0;
+        this.worldEventCountdown = GAME_WORLD_EVENT_COUNTDOWN;
         this.msgFactory = this.server.getMsgFactory();
         this.gameInitiated = true;
         this.state = ServerGameState.GAME_STARTED;
@@ -114,6 +113,10 @@ public class Game {
         return this.players;
     }
 
+    public int getWorldEventCountdown() {
+        return worldEventCountdown;
+    }
+
     public boolean isInitiated(){
         return gameInitiated;
     }
@@ -144,7 +147,8 @@ public class Game {
                     food.getFood(),
                     getPlayersInfo(),
                     this.GridX,
-                    this.GridY
+                    this.GridY,
+                    this.getWorldEventCountdown()
             ));
         }
     }
@@ -159,7 +163,7 @@ public class Game {
     }
 
     private void doWorldEvent() {
-        if(worldEventCounter == GAME_WORLD_EVENT_TRIGGER) {
+        if(worldEventCountdown == 0) {
             this.GridX = this.GridX - (GAME_WORLD_EVENT_GRID_DECREASE*2);
             this.GridY = this.GridY - (GAME_WORLD_EVENT_GRID_DECREASE*2);
 
@@ -190,16 +194,19 @@ public class Game {
                 this.food.spawnFood(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
             });
 
-            this.players.values().forEach(player ->
+            this.players.values().forEach(player -> {
                     player.setSnakeBody(player.getSnakeBody().stream()
                             .map(cell -> new Vector2f(cell.x - GAME_WORLD_EVENT_GRID_DECREASE,
                                     cell.y - GAME_WORLD_EVENT_GRID_DECREASE))
-                            .collect(Collectors.toCollection(LinkedList::new)))
-            );
+                            .collect(Collectors.toCollection(LinkedList::new)));
+                    Vector2f lastSegmentOfLastMove = player.getLastSegmentOfLastMove();
+                    player.setLastSegmentOfLastMove(new Vector2f(lastSegmentOfLastMove.x - GAME_WORLD_EVENT_GRID_DECREASE,
+                            lastSegmentOfLastMove.y - GAME_WORLD_EVENT_GRID_DECREASE));
+            });
 
-            worldEventCounter = 0;
+            worldEventCountdown = GAME_WORLD_EVENT_COUNTDOWN;
         }
-        worldEventCounter++;
+        worldEventCountdown--;
     }
 
     public void setKeys(int index, boolean value){

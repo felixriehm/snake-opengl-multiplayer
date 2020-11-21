@@ -44,7 +44,8 @@ public class MsgReader implements Runnable {
 
                 if(msg instanceof InitGameMsg){
                     InitGameMsg ism = (InitGameMsg) msg;
-                    game.start(ism.getPlayerCount(), ism.getGridX(), ism.getGridX(), ism.getGameState(), ism.getFood(), ism.getSnakes());
+                    game.start(ism.getPlayerCount(), ism.getGridX(),
+                            ism.getGridX(), ism.getGameState(), ism.getFood(), ism.getSnakes(), ism.getWorldEventCountdown());
                 }
 
                 if(msg instanceof GameStateMsg){
@@ -57,7 +58,7 @@ public class MsgReader implements Runnable {
                     GameUpdateMsg gem = (GameUpdateMsg) msg;
                     logger.debug(gem.getSnakes());
                     logger.debug(gem.getFood());
-                    game.update(gem.getFood(), gem.getSnakes(), gem.getGridX(), gem.getGridY());
+                    game.update(gem.getFood(), gem.getSnakes(), gem.getGridX(), gem.getGridY(), gem.getWorldEventCountdown());
                 }
             } catch (IOException e) {
                 e.printStackTrace();

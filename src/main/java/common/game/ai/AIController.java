@@ -9,7 +9,8 @@ import java.util.*;
 public class AIController {
 
     public Direction getNextMove(Set<Vector2f> food, Set<LinkedList<Vector2f>> enemies,
-                                 LinkedList<Vector2f> player, Direction lastPlayerDirection, int gridX, int gridY){
+                                 LinkedList<Vector2f> player, Direction lastPlayerDirection,
+                                 int gridX, int gridY, int worldEventCountdown){
         Direction nextDirection = Direction.LEFT;
 
         // find nearest food and move towards it

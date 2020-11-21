@@ -35,6 +35,7 @@ public class Game {
     private final boolean withOpenGL;
     private MsgFactory msgFactory;
     private ClientGameState state;
+    private int woldEventCountdown;
     private int Width, Height, GridX, GridY;
     private IPrimitiveRenderer squareRenderer;
     private IPrimitiveRenderer triangleRenderer;
@@ -96,8 +97,10 @@ public class Game {
         }
     }
 
-    public void start(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes){
+    public void start(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food,
+                      HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, int woldEventCountdown){
         this.playerCount = playerCount;
+        this.woldEventCountdown = woldEventCountdown;
         this.setGameState(gameState);
         this.setGridSize(gridX, gridY);
         // on server side remove players from list
@@ -195,10 +198,12 @@ public class Game {
     }
 
 
-    public void update(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> players, int gridX, int gridY){
+    public void update(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> players, int gridX,
+                       int gridY, int woldEventCountdown){
         if(players.containsKey(networkManager.getId())) {
             this.lastDirection = players.get(networkManager.getId()).getValue();
         }
+        this.woldEventCountdown = woldEventCountdown;
         setGridSize(gridX, gridY);
         setFood(food);
         setPlayers(players);
@@ -210,7 +215,8 @@ public class Game {
                     .collect(Collectors.toCollection(HashSet::new));
             LinkedList<Vector2f> player = this.players.get(networkManager.getId()).getSnakeBody();
 
-            Direction nextDirection = aiController.getNextMove(this.food.getFood(),enemies,player,this.lastDirection, this.GridX, this.GridY);
+            Direction nextDirection = aiController.getNextMove(this.food.getFood(),enemies,player,
+                    this.lastDirection, this.GridX, this.GridY, this.woldEventCountdown);
             networkManager.sendMessage(msgFactory.getMoveMsg(nextDirection));
         }
     }

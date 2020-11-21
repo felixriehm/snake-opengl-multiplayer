@@ -16,10 +16,10 @@ public class MsgFactory {
         this.networkId = networkId;
     }
 
-    public GameUpdateMsg getGameEntitiesMsg(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, int gridX, int gridY){
+    public GameUpdateMsg getGameEntitiesMsg(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, int gridX, int gridY, int worldEventCountdown){
         Set<Vector2f> foodCopy = new HashSet<>(food);
 
-        return new GameUpdateMsg(foodCopy, snakes, networkId, gridX, gridY);
+        return new GameUpdateMsg(foodCopy, snakes, networkId, gridX, gridY, worldEventCountdown);
     }
 
     public GameStateMsg getGameStateMsg(ClientGameState gameState){
@@ -34,10 +34,11 @@ public class MsgFactory {
         return new MoveMsg(direction, networkId);
     }
 
-    public InitGameMsg getInitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes){
+    public InitGameMsg getInitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState,
+                                      Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, int worldEventCountdown){
         Set<Vector2f> foodCopy = new HashSet<>(food);
 
-        return new InitGameMsg(playerCount, gridX, gridY, gameState,foodCopy, snakes, networkId);
+        return new InitGameMsg(playerCount, gridX, gridY, gameState,foodCopy, snakes, networkId, worldEventCountdown);
     }
 
     public RegisterMsg getRegisterMsg(){

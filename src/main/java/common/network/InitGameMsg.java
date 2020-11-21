@@ -17,8 +17,9 @@ public class InitGameMsg extends BaseMsg {
     private final ClientGameState gameState;
     private final Set<Vector2f> food;
     private final HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes;
+    private final int worldEventCountdown;
 
-    public InitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, UUID sender){
+    public InitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, UUID sender, int worldEventCountdown){
         super(sender);
         this.playerCount = playerCount;
         this.gridX = gridX;
@@ -26,6 +27,7 @@ public class InitGameMsg extends BaseMsg {
         this.gameState = gameState;
         this.food = food;
         this.snakes = snakes;
+        this.worldEventCountdown = worldEventCountdown;
     }
 
     public int getPlayerCount() {
@@ -38,6 +40,10 @@ public class InitGameMsg extends BaseMsg {
 
     public int getGridX() {
         return gridX;
+    }
+
+    public int getWorldEventCountdown() {
+        return worldEventCountdown;
     }
 
     public int getGridY() {

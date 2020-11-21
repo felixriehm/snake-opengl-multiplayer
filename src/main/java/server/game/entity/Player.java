@@ -100,6 +100,14 @@ public class Player {
         return this.body.getFirst();
     }
 
+    public void setLastSegmentOfLastMove(Vector2f cell){
+        this.lastSegmentOfLastMove = cell;
+    }
+
+    public Vector2f getLastSegmentOfLastMove(){
+        return this.lastSegmentOfLastMove;
+    }
+
     public void grow(){
         this.body.add(this.lastSegmentOfLastMove);
     }
