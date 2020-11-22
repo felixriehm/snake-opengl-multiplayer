@@ -1,6 +1,6 @@
 package common;
 
-import client.game.manager.ResourceManager;
+import client.view.manager.ResourceManager;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

@@ -1,6 +1,5 @@
 package common.game.ai;
 
-import client.game.entity.Player;
 import common.game.Direction;
 import org.joml.Vector2f;
 

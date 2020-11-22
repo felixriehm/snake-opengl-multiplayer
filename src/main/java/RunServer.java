@@ -1,10 +1,9 @@
-import client.Client;
 import server.Server;
 
 import java.io.IOException;
 
 public class RunServer {
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         Server.main(new String[]{});
     }
 }

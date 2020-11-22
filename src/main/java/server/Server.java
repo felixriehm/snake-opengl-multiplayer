@@ -3,14 +3,13 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
-import client.network.NetworkManager;
 import common.Configuration;
 import common.network.BaseMsg;
 import common.network.MsgFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import server.game.Game;
-import server.network.ClientManager;
+import server.controller.game.Game;
+import server.controller.network.ClientManager;
 
 public class Server <T extends BaseMsg>  {
     private static final Logger logger = LogManager.getLogger(Server.class.getName());
