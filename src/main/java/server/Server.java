@@ -72,7 +72,7 @@ public class Server <T extends BaseMsg>  {
         new Server().run();
     }
 
-    public void broadcastMsg(T msg) {
+    public synchronized void broadcastMsg(T msg) {
         this.clients.entrySet().forEach(client -> client.getValue().sendMessage(msg));
     }
 

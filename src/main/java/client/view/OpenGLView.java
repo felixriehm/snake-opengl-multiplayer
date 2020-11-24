@@ -199,7 +199,7 @@ public class OpenGLView {
     }
 
     private void render() {
-        if (snake.getState() == ClientGameState.GAME_ACTIVE)
+        if (snake.getGridX() > 0 )
         {
             int cellSize = SCREEN_WIDTH / snake.getGridX();
             if(snake.getPlayers() != null) {
