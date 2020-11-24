@@ -20,8 +20,6 @@ import java.util.stream.Collectors;
 public class Game {
     private static final Logger logger = LogManager.getLogger(Game.class.getName());
 
-    public static final Vector2f PLAYER_SIZE = new Vector2f(512.0f, 100.0f);
-    public static final Vector2f PLAYER_VELOCITY = new Vector2f(500.0f, 500.0f);
     public static final int GAME_UPDATE_RATE = Integer.parseInt(Configuration.getInstance().getProperty("game.update-rate"));
     public static final int GAME_WORLD_EVENT_COUNTDOWN = Integer.parseInt(Configuration.getInstance().getProperty("game.world-event.countdown"));
     public static final int GAME_WORLD_EVENT_GRID_DECREASE = Integer.parseInt(Configuration.getInstance().getProperty("game.world-event.grid-decrease"));
@@ -102,7 +100,7 @@ public class Game {
             public void run() {
                 gameReference.update();
             }
-        }, 20, GAME_UPDATE_RATE);
+        }, 0, GAME_UPDATE_RATE);
     }
 
     public Food getFood(){

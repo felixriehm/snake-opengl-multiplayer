@@ -7,25 +7,28 @@ import server.controller.game.Game;
 
 import java.io.ObjectOutputStream;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
 
 public class RequestStartGameHandler implements Runnable {
 
     private final ObjectOutputStream dos;
     private final Server server;
+    private final Lock initGameLock;
 
-    public RequestStartGameHandler(ObjectOutputStream dos, Server server){
+    public RequestStartGameHandler(ObjectOutputStream dos, Server server, Lock initGameLock){
         this.dos = dos;
         this.server = server;
+        this.initGameLock = initGameLock;
     }
 
     @Override
     public void run() {
+        initGameLock.lock();
         if(server.getGame() != null) {
             server.getGame().stopUpdate();
         }
 
         int gridSize = (server.getClients().size() * 10) / 2;
-        // TODO: LOCK
         server.setGame(new Game());
         server.getGame().init(gridSize, gridSize, server.getClients().keySet(), server);
 
@@ -34,5 +37,6 @@ public class RequestStartGameHandler implements Runnable {
         server.broadcastMsg(server.getMsgFactory().getInitGameMsg(server.getClients().size(),
                 gridSize, gridSize, ClientGameState.GAME_ACTIVE, food, server.getGame().getPlayersInfo(),
                 server.getGame().getWorldEventCountdown()));
+        initGameLock.unlock();
     }
 }

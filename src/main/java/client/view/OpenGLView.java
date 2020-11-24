@@ -174,7 +174,6 @@ public class OpenGLView {
         // bindings available for use.
         GL.createCapabilities();
 
-        glEnable(GL_CULL_FACE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -225,14 +224,25 @@ public class OpenGLView {
         }
 
         if(snake.getState() == ClientGameState.GAME_MENU){
-            for (int y = 1; y < 10; y++)
-            {
-                squareRenderer.draw(new Vector2f(0.f, (y * 64) - (GRID_LINE_WIDTH / 2)),
-                        new Vector2f(SCREEN_WIDTH, GRID_LINE_WIDTH), 0.0f, GRID_COLOR);
-            }
+            squareRenderer.draw(new Vector2f(SCREEN_WIDTH / 2f, SCREEN_HEIGHT / 2f),
+                    new Vector2f(70f, 70f), 0.0f, new Vector3f(1f,1f,1f));
 
-            textRenderer.renderText("Press Enter to start or restart the game.",
-                    this.SCREEN_WIDTH / 2.0f, this.SCREEN_HEIGHT / 2.0f, 1.0f, new Vector3f(0.0f, 1.0f, 1.0f));
+            textRenderer.renderText("Press Enter to start or restart.",
+                    SCREEN_WIDTH / 2f, SCREEN_WIDTH / 2f, 1f, new Vector3f(1f,1f,1f));
+        }
+
+        if(snake.getState() == ClientGameState.GAME_WIN){
+            squareRenderer.draw(new Vector2f(SCREEN_WIDTH / 2f, SCREEN_HEIGHT / 2f),
+                    new Vector2f(70f, 70f), 0.0f, new Vector3f(0f,1f,0f));
+            textRenderer.renderText("Won!",
+                    SCREEN_WIDTH / 2f, SCREEN_WIDTH / 2f, 1f, new Vector3f(1f,1f,1f));
+        }
+
+        if(snake.getState() == ClientGameState.GAME_LOSS){
+            squareRenderer.draw(new Vector2f(SCREEN_WIDTH / 2f, SCREEN_HEIGHT / 2f),
+                    new Vector2f(70f, 70f), 0.0f, new Vector3f(1f,0f,0f));
+            textRenderer.renderText("Lost!",
+                    SCREEN_WIDTH / 2f, SCREEN_WIDTH / 2f, 1f, new Vector3f(1f,1f,1f));
         }
     }
 

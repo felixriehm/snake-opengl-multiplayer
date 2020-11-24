@@ -44,11 +44,6 @@ public class TextRenderer {
         }
         textShader.use();
         textShader.setMatrix4("projection", projection, true);
-        /*textShader.setMatrix4("projection", new Matrix4f(
-                2f/ (1024 - 0),0,0,0,
-                0,2f / (0 - 1024),0,0,
-                0, 0,-1f,0,
-                -(1024 + 0) / (1024 - 0),-(0 + 1024) / (0 - 1024),0,1f), true);*/
         textShader.setInteger("text", 0, true);
         // configure VAO/VBO for texture quads
         this.VAO = glGenVertexArrays();
@@ -87,14 +82,6 @@ public class TextRenderer {
             int texture = glGenTextures();
             glBindTexture(GL_TEXTURE_2D, texture);
 
-            /*Bitmap bmp = face.getGlyphSlot().getBitmap();
-            ByteBuffer buf = face.getGlyphSlot().getBitmap().getBuffer(); // TODO: delete
-            for(int i = 0; i < bmp.getRows(); i++) {
-                for(int j = 0; j < bmp.getWidth(); j++) {
-                    System.out.print(buf.get() != 0 ? 1 : 0);
-                }
-                System.out.println();
-            }*/
             glTexImage2D(
                     GL_TEXTURE_2D,
                     0,
@@ -156,12 +143,6 @@ public class TextRenderer {
             fb.put(xpos).put(ypos + h).put(0.0f).put(1.0f);
             fb.put(xpos + w).put(ypos + h).put(1.0f).put(1.0f);
             fb.put(xpos + w).put(ypos).put(1.0f).put(0.0f);
-            /*fb.put(0.0f).put(1.0f).put(0.0f).put(1.0f);
-            fb.put(1.0f).put(0.0f).put(1.0f).put(0.0f);
-            fb.put(0.0f).put(0.0f).put(0.0f).put(0.0f);
-            fb.put(0.0f).put(1.0f).put(0.0f).put(1.0f);
-            fb.put(1.0f).put(1.0f).put(1.0f).put(1.0f);
-            fb.put(1.0f).put(0.0f).put(1.0f).put(0.0f);*/
 
             // render glyph texture over quad
             glBindTexture(GL_TEXTURE_2D, ch.textureId);

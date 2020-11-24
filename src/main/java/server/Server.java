@@ -2,6 +2,8 @@ package server;
 import java.io.*;
 import java.util.*;
 import java.net.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import common.Configuration;
 import common.network.BaseMsg;
@@ -13,7 +15,7 @@ import server.controller.network.ClientManager;
 
 public class Server <T extends BaseMsg>  {
     private static final Logger logger = LogManager.getLogger(Server.class.getName());
-
+    private final Lock initGameLock = new ReentrantLock();
     // Vector to store active clients
     private HashMap<UUID, ClientManager> clients = new HashMap<>();
     private MsgFactory msgFactory;
@@ -49,7 +51,7 @@ public class Server <T extends BaseMsg>  {
                 logger.debug("Creating a new handler for this client...");
 
                 // Create a new handler object for handling this request.
-                ClientManager mtch = new ClientManager(s, dis, dos, uuid, this);
+                ClientManager mtch = new ClientManager(s, dis, dos, uuid, this, initGameLock);
 
                 // Create a new Thread with this object.
                 Thread t = new Thread(mtch);

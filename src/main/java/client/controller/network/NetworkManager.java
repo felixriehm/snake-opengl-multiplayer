@@ -60,9 +60,13 @@ public class NetworkManager <T extends BaseMsg>
         new Thread(new MsgReader(s, dis, dos,  uuid, game)).start();
     }
 
-    public void sendMessage(T msg) {
+    public synchronized void sendMessage(T msg) {
         logger.debug("Client: sent message: " + msg);
-        new Thread(new MsgWriter<T>(msg, dos)).start();
+        try {
+            dos.writeUnshared(msg);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public MsgFactory getMsgFactory() {

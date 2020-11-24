@@ -35,7 +35,6 @@ public class MsgReader implements Runnable {
         while (true) {
             try {
                 // read the message sent to this client
-                //TODO LOCK
                 Object msg = dis.readUnshared();
 
                 logger.debug("Client " + networkId + ": received message");

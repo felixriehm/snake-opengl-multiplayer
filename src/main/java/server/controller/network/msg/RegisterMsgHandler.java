@@ -22,7 +22,6 @@ public class RegisterMsgHandler implements Runnable {
 
     @Override
     public void run() {
-        // TODO: Lock
         server.addClient(msg.getSender(), client);
     }
 }
