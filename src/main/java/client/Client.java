@@ -3,6 +3,10 @@ package client;
 import client.controller.game.Game;
 import client.controller.network.NetworkManager;
 import client.view.OpenGLView;
+import com.mlomb.freetypejni.Face;
+import com.mlomb.freetypejni.FreeType;
+import com.mlomb.freetypejni.FreeTypeConstants;
+import com.mlomb.freetypejni.Library;
 import common.game.ai.AIController;
 
 import java.io.IOException;

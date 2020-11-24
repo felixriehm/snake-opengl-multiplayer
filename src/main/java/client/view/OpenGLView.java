@@ -1,10 +1,7 @@
 package client.view;
 
 import client.controller.game.Game;
-import client.view.renderer.CircleRenderer;
-import client.view.renderer.IPrimitiveRenderer;
-import client.view.renderer.SquareRenderer;
-import client.view.renderer.TriangleRenderer;
+import client.view.renderer.*;
 import client.view.shader.Shader;
 import client.controller.network.NetworkManager;
 import client.view.manager.ResourceManager;
@@ -62,6 +59,7 @@ public class OpenGLView {
     private IPrimitiveRenderer squareRenderer;
     private IPrimitiveRenderer triangleRenderer;
     private IPrimitiveRenderer circleRenderer;
+    private TextRenderer textRenderer;
 
     public void run(Game game, NetworkManager networkManager) {
         this.snake = game;
@@ -163,6 +161,8 @@ public class OpenGLView {
         squareRenderer = new SquareRenderer(s);
         triangleRenderer = new TriangleRenderer(s);
         circleRenderer = new CircleRenderer(s);
+        textRenderer = new TextRenderer(projection);
+        textRenderer.load("src/main/resources/fonts/OCRAEXT.TTF", 24);
         // TODO: Create TextRenderer and load font
     }
 
@@ -173,6 +173,10 @@ public class OpenGLView {
         // creates the GLCapabilities instance and makes the OpenGL
         // bindings available for use.
         GL.createCapabilities();
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         initRenderer();
 
@@ -210,12 +214,25 @@ public class OpenGLView {
             // draw grid
             for (int x = 1; x < snake.getGridX(); x++)
             {
-                squareRenderer.draw(new Vector2f((x * cellSize) - (GRID_LINE_WIDTH / 2), 0.f), new Vector2f(GRID_LINE_WIDTH, SCREEN_HEIGHT), 0.0f, GRID_COLOR);
+                squareRenderer.draw(new Vector2f((x * cellSize) - (GRID_LINE_WIDTH / 2), 0.f),
+                        new Vector2f(GRID_LINE_WIDTH, SCREEN_HEIGHT), 0.0f, GRID_COLOR);
             }
             for (int y = 1; y < snake.getGridY(); y++)
             {
-                squareRenderer.draw(new Vector2f(0.f, (y * cellSize) - (GRID_LINE_WIDTH / 2)), new Vector2f(SCREEN_WIDTH, GRID_LINE_WIDTH), 0.0f, GRID_COLOR);
+                squareRenderer.draw(new Vector2f(0.f, (y * cellSize) - (GRID_LINE_WIDTH / 2)),
+                        new Vector2f(SCREEN_WIDTH, GRID_LINE_WIDTH), 0.0f, GRID_COLOR);
             }
+        }
+
+        if(snake.getState() == ClientGameState.GAME_MENU){
+            for (int y = 1; y < 10; y++)
+            {
+                squareRenderer.draw(new Vector2f(0.f, (y * 64) - (GRID_LINE_WIDTH / 2)),
+                        new Vector2f(SCREEN_WIDTH, GRID_LINE_WIDTH), 0.0f, GRID_COLOR);
+            }
+
+            textRenderer.renderText("Press Enter to start or restart the game.",
+                    this.SCREEN_WIDTH / 2.0f, this.SCREEN_HEIGHT / 2.0f, 1.0f, new Vector3f(0.0f, 1.0f, 1.0f));
         }
     }
 
