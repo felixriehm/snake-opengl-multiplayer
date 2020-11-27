@@ -244,7 +244,7 @@ public class Game {
                 QuadTree.XYPointAltered point = tupel.getKey();
                 if(point != null){
                     // cell is already taken another player
-                    if(!inserted && point.getX() == cell.x && point.getY() == cell.y) {
+                    if(!inserted) {
                         // head of another player is inside this player
                         if (point.isHead()) {
                             removedPlayer.add(point.getUUID());
