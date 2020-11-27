@@ -29,6 +29,9 @@ public class RequestStartGameHandler implements Runnable {
         }
 
         int gridSize = (int) (Math.log(server.getClients().size()) * 10);
+        if(gridSize < 10) {
+            gridSize = 10;
+        }
         server.setGame(new Game());
         server.getGame().init(gridSize, gridSize, server.getClients().keySet(), server);
 

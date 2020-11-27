@@ -13,6 +13,7 @@ import server.Server;
 import server.model.game.entity.Food;
 import server.model.game.entity.Player;
 import server.controller.network.ClientManager;
+import server.util.QuadTree;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -226,45 +227,53 @@ public class Game {
 
     public void checkLossCondition()
     {
-        ArrayList<UUID> removedPlayer = new ArrayList();
+        // store players which should be removed after collision check
+        HashSet<UUID> removedPlayer = new HashSet<>();
 
+        // init QuadTree
+        QuadTree.PointRegionQuadTree tree = new QuadTree.PointRegionQuadTree(0, 0, GridX , GridY);
+
+        // add all snake cells and do hit detection
         for(Map.Entry<UUID, Player> player : players.entrySet() ) {
-            ClientManager client = (ClientManager) this.server.getClients().get(player.getKey());
-
-            // snake is outside of grid
-            if (snakeOutsideOfGrid(player.getValue().getSnakeBody())) {
-                removedPlayer.add(player.getKey());
-                client.sendMessage(msgFactory.getGameStateMsg(ClientGameState.GAME_LOSS));
-                continue;
-            }
-
-            // snake hits its own or another body
-            List<Vector2f> allSnakeCells = players.values().stream().flatMap(p -> p.getSnakeBody().stream())
-                    .collect(Collectors.toList());
-            Vector2f head = player.getValue().getSnakeHead();
-            allSnakeCells.retainAll(Arrays.asList(head));
-            if(allSnakeCells.size() > 1) {
-                removedPlayer.add(player.getKey());
-                client.sendMessage(msgFactory.getGameStateMsg(ClientGameState.GAME_LOSS));
-                continue;
+            List<Vector2f> snake = player.getValue().getSnakeBody();
+            // loop must be inverted so that self hit detection works
+            for (int i = snake.size() - 1; i >= 0; i--) {
+                Vector2f cell = snake.get(i);
+                Pair<QuadTree.XYPointAltered, Boolean> tupel = tree.insertAltered(cell.x, cell.y, player.getKey(), i == 0);
+                boolean inserted = tupel.getValue();
+                QuadTree.XYPointAltered point = tupel.getKey();
+                if(point != null){
+                    // cell is already taken another player
+                    if(!inserted && point.getX() == cell.x && point.getY() == cell.y) {
+                        // head of another player is inside this player
+                        if (point.isHead()) {
+                            removedPlayer.add(point.getUUID());
+                        }
+                        // head of this player is inside another player or itself
+                        if (i == 0) {
+                            removedPlayer.add(player.getKey());
+                        }
+                    }
+                } else {
+                    // this player is outside of the grid
+                    removedPlayer.add(player.getKey());
+                }
             }
         }
 
-        removedPlayer.forEach(player -> players.remove(player));
+        removedPlayer.forEach(player -> {
+            players.remove(player);
+            ClientManager client = (ClientManager) this.server.getClients().get(player);
+            if(client != null) {
+                client.sendMessage(msgFactory.getGameStateMsg(ClientGameState.GAME_LOSS));
+            }
+        });
+
 
         if(players.size() == 0) {
             this.state = ServerGameState.GAME_ENDED;
             stopUpdate();
         }
-    }
-
-    private boolean snakeOutsideOfGrid(List<Vector2f> snakeBody){
-        for(Vector2f snakeCell : snakeBody) {
-            if(snakeCell.x < 0 || snakeCell.y < 0 || snakeCell.x >= this.GridX || snakeCell.y >= this.GridY) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public void doCollisions()

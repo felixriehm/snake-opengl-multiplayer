@@ -13,7 +13,7 @@ public class RunMultipleAIClients {
                 () -> { Client.main(new String[]{"ai"}); };
         for (int i = 0; i < 99; i++) {
             new Thread(runnable).start();
-            TimeUnit.MILLISECONDS.sleep(100);
+            TimeUnit.MILLISECONDS.sleep(20);
         }
         logger.debug("All threads started!");
     }
