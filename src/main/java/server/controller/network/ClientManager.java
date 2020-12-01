@@ -4,6 +4,7 @@ import common.network.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import server.Server;
+import server.controller.network.msg.CheatGrowMsgHandler;
 import server.controller.network.msg.MoveMsgHandler;
 import server.controller.network.msg.RegisterMsgHandler;
 import server.controller.network.msg.RequestStartGameHandler;
@@ -71,6 +72,12 @@ public class ClientManager <T extends BaseMsg> implements Runnable {
                     Thread t = new Thread(mtch);
                     t.start();
                 }
+
+                if (received instanceof CheatGrowMsg) {
+                    CheatGrowMsgHandler mtch = new CheatGrowMsgHandler((CheatGrowMsg) received, server);
+                    Thread t = new Thread(mtch);
+                    t.start();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
@@ -95,8 +102,7 @@ public class ClientManager <T extends BaseMsg> implements Runnable {
         logger.debug("Server " + serverId + ": sent message");
         logger.debug(msg);
         if (msg instanceof GameUpdateMsg) {
-            logger.debug(((GameUpdateMsg) msg).getFood());
-            logger.debug(((GameUpdateMsg) msg).getSnakes());
+            logger.debug(((GameUpdateMsg) msg).getGameData());
         }
         try {
             dos.writeUnshared(msg);

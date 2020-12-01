@@ -1,20 +1,19 @@
 package common.game.ai;
 
-import common.game.Direction;
+import common.game.model.Direction;
 import org.joml.Vector2f;
 
 import java.util.*;
 
 public class AIController {
 
-    public Direction getNextMove(Set<Vector2f> food, Set<LinkedList<Vector2f>> enemies,
-                                 LinkedList<Vector2f> player, Direction lastPlayerDirection,
+    public Direction getNextMove(Set<Vector2f> food, Set<Vector2f> enemies,
+                                 Set<Vector2f> playerBody, Vector2f playerHead, Direction lastPlayerDirection,
                                  int gridX, int gridY, int worldEventCountdown){
         Direction nextDirection = Direction.LEFT;
 
         // find nearest food and move towards it
         if(!food.isEmpty()){
-            Vector2f playerHead = player.getFirst();
             Vector2f nearestFood = null;
 
             float shortestDistance = -1f;

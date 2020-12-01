@@ -1,9 +1,7 @@
 package server.controller.game;
 
 import common.Configuration;
-import common.game.ClientGameState;
-import common.game.Direction;
-import common.game.ServerGameState;
+import common.game.model.*;
 import common.network.MsgFactory;
 import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -13,8 +11,10 @@ import server.Server;
 import server.model.game.entity.Food;
 import server.model.game.entity.Player;
 import server.controller.network.ClientManager;
+import server.model.game.entity.Wall;
 import server.util.QuadTree;
 
+import java.net.ServerSocket;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,16 +25,17 @@ public class Game {
     public static final int GAME_WORLD_EVENT_COUNTDOWN = Integer.parseInt(Configuration.getInstance().getProperty("game.world-event.countdown"));
     public static final int GAME_WORLD_EVENT_GRID_DECREASE = Integer.parseInt(Configuration.getInstance().getProperty("game.world-event.grid-decrease"));
     public static final boolean GAME_WORLD_EVENT_ENABLED = Boolean.parseBoolean(Configuration.getInstance().getProperty("game.world-event.enabled"));
+    public static final int PLAYER_VIEW_DISTANCE = Integer.parseInt(Configuration.getInstance().getProperty("game.player.view-distance"));
+    public static final boolean GAME_WIN_CONDITION_ENABLED = Boolean.parseBoolean(Configuration.getInstance().getProperty("game.win-condition.enabled"));
     private ServerGameState state;
     private int GridX, GridY;
     // will be modified inside Player and Food Object
     private Set availableGridCells = new HashSet();
     private HashMap<UUID, Player> players = new HashMap<UUID, Player>();
     private Food food;
+    private Wall wall;
     private MsgFactory msgFactory;
     private Server server;
-    private boolean[] keys = new boolean[1024];
-    private boolean[] keysProcessed = new boolean[1024];
     private Game gameReference;
     private Timer updateTimer;
     private boolean gameInitiated = false;
@@ -91,6 +92,10 @@ public class Game {
         }
         clients.forEach(clientId -> this.players.put(clientId, new Player(freeCells, GridX, GridY)));
 
+        wall = new Wall();
+        wall.initGreatWall(gridX, gridY);
+        this.availableGridCells.removeAll(wall.getGreatWall());
+
         // spawn food, needs to happen after Player init
         food = new Food(this.availableGridCells);
         food.spawnFood(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
@@ -139,26 +144,78 @@ public class Game {
             this.checkLossCondition();
 
             // check win condition
-            this.checkWinCondition();
+            if(GAME_WIN_CONDITION_ENABLED) {
+                this.checkWinCondition();
+            }
 
-
-            this.server.broadcastMsg(msgFactory.getGameEntitiesMsg(
-                    food.getFood(),
-                    getPlayersInfo(),
-                    this.GridX,
-                    this.GridY,
-                    this.getWorldEventCountdown()
-            ));
+            this.server.broadcastGameUpdateMsg();
         }
     }
 
-    public HashMap<UUID, Pair<List<Vector2f>, Direction>> getPlayersInfo() {
-        HashMap<UUID, Pair<List<Vector2f>, Direction>> playersDTO = new HashMap<>();
-        for(Map.Entry<UUID, Player> player : this.players.entrySet()) {
-            playersDTO.put(player.getKey(), new Pair<>(new LinkedList<Vector2f>(player.getValue().getSnakeBody()),
-                    player.getValue().getLastDirection()));
+    public Set<PointGameData> getGameData(QuadTree.PointRegionQuadTree tree, Player player) {
+        Set<PointGameData> worldSpace = getPlayerView(tree, player);
+        Set<PointGameData> localSpace = transformWorldSpaceToLocalSpace(worldSpace, player);
+        logger.debug(localSpace);
+        return localSpace;
+    }
+
+    private Set<PointGameData> transformWorldSpaceToLocalSpace(Set<PointGameData> points, Player player){
+        Vector2f playerHead = player.getSnakeHead();
+        float viewEdgeToGridEdgeDistanceX = getActualViewDistanceX(playerHead, player.getSnakeBody().size());
+        float viewEdgeToGridEdgeDistanceY = getActualViewDistanceY(playerHead, player.getSnakeBody().size());
+        for(PointGameData point : points) {
+            point.setXY(point.getX() - viewEdgeToGridEdgeDistanceX, point.getY() - viewEdgeToGridEdgeDistanceY);
         }
-        return playersDTO;
+        return points;
+    }
+
+    private Set<PointGameData> getPlayerView(QuadTree.PointRegionQuadTree tree, Player player) {
+        int playerGridX = calculatePlayerGrid(player);
+        int playerGridY = playerGridX;
+        Set<PointGameData> points = new HashSet<>();
+        Vector2f head = player.getSnakeHead();
+        int snakeLength = player.getSnakeBody().size();
+        points = (Set<PointGameData>) tree
+                .queryRange(getActualViewDistanceX(head, snakeLength), getActualViewDistanceY(head, snakeLength),
+                        playerGridX, playerGridY)
+                .stream().map(point -> ((QuadTree.XYPointGameData)point).getData())
+                .collect(Collectors.toSet());
+        return points;
+    }
+
+    public QuadTree.PointRegionQuadTree generateGameDataQuadTree(){
+        QuadTree.PointRegionQuadTree tree = new QuadTree.PointRegionQuadTree(0, 0, GridX , GridY);
+
+        for(Map.Entry<UUID, Player> entry : this.players.entrySet()) {
+            List<Vector2f> snake = entry.getValue().getSnakeBody();
+            for (int i = 0; i < snake.size(); i++) {
+                Vector2f point = snake.get(i);
+                tree.insertGameData(point.x, point.y, new PointSnake(point.x,
+                        point.y, entry.getKey(), i == 0));
+            }
+        }
+
+        for(Vector2f food : food.getFood()) {
+            tree.insertGameData(food.x, food.y, new PointFood(food.x, food.y));
+        }
+
+        for(Vector2f wall : wall.getGreatWall()) {
+            tree.insertGameData(wall.x, wall.y, new PointWall(wall.x, wall.y));
+        }
+
+        return tree;
+    }
+
+    public Set<PointGameData> getAllGameData(QuadTree.PointRegionQuadTree tree){
+        return null; //TODO: implement, call when death
+    }
+
+    private float getActualViewDistanceX(Vector2f head, int snakeLength){
+        return head.x - (snakeLength - 1) - PLAYER_VIEW_DISTANCE;
+    }
+
+    private float getActualViewDistanceY(Vector2f head, int snakeLength){
+        return head.y - (snakeLength - 1) - PLAYER_VIEW_DISTANCE;
     }
 
     private void doWorldEvent() {
@@ -208,14 +265,6 @@ public class Game {
         worldEventCountdown--;
     }
 
-    public void setKeys(int index, boolean value){
-        this.keys[index] = value;
-    }
-
-    public void setKeysProcessed(int index, boolean value){
-        this.keysProcessed[index] = value;
-    }
-
     public void checkWinCondition() {
        if(players.size() == 1) {
             ClientManager client = (ClientManager) this.server.getClients().get(players.keySet().toArray()[0]);
@@ -233,31 +282,37 @@ public class Game {
         // init QuadTree
         QuadTree.PointRegionQuadTree tree = new QuadTree.PointRegionQuadTree(0, 0, GridX , GridY);
 
+        // add all wall cells
+        for (Vector2f point : wall.getGreatWall()){
+            tree.insertGameData(point.x, point.y , new PointWall(point.x, point.y));
+        }
+
         // add all snake cells and do hit detection
         for(Map.Entry<UUID, Player> player : players.entrySet() ) {
             List<Vector2f> snake = player.getValue().getSnakeBody();
             // loop must be inverted so that self hit detection works
             for (int i = snake.size() - 1; i >= 0; i--) {
                 Vector2f cell = snake.get(i);
-                Pair<QuadTree.XYPointAltered, Boolean> tupel = tree.insertAltered(cell.x, cell.y, player.getKey(), i == 0);
+                Pair<QuadTree.XYPointGameData, Boolean> tupel = tree.insertGameData(cell.x, cell.y, new PointSnake(cell.x, cell.y, player.getKey(), i == 0));
                 boolean inserted = tupel.getValue();
-                QuadTree.XYPointAltered point = tupel.getKey();
+                QuadTree.XYPointGameData point = tupel.getKey();
                 if(point != null){
-                    // cell is already taken another player
+                    // cell is already taken another entity
                     if(!inserted) {
+                        Object data = point.getData();
                         // head of another player is inside this player
-                        if (point.isHead()) {
-                            removedPlayer.add(point.getUUID());
+                        if (data instanceof PointSnake) {
+                            PointSnake pointSnake = ((PointSnake) data);
+                            if(pointSnake.isHead()) {
+                                removedPlayer.add(pointSnake.getUuid());
+                            }
                         }
-                        // head of this player is inside another player or itself
+                        // head of this player is inside another player or itself or wall
                         if (i == 0) {
                             removedPlayer.add(player.getKey());
                         }
                     }
-                } else {
-                    // this player is outside of the grid
-                    removedPlayer.add(player.getKey());
-                }
+                } // else: this player is outside of the grid
             }
         }
 
@@ -294,5 +349,10 @@ public class Game {
         if(updateTimer != null) {
             updateTimer.cancel();
         }
+    }
+
+    public int calculatePlayerGrid(Player player){
+        //TODO: only when ...
+        return player.getSnakeBody().size()*2 + Game.PLAYER_VIEW_DISTANCE*2 - 1;
     }
 }

@@ -1,7 +1,8 @@
 package common.network;
 
-import common.game.ClientGameState;
-import common.game.Direction;
+import common.game.model.ClientGameState;
+import common.game.model.Direction;
+import common.game.model.PointGameData;
 import javafx.util.Pair;
 import org.joml.Vector2f;
 
@@ -16,10 +17,9 @@ public class MsgFactory {
         this.networkId = networkId;
     }
 
-    public GameUpdateMsg getGameEntitiesMsg(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, int gridX, int gridY, int worldEventCountdown){
-        Set<Vector2f> foodCopy = new HashSet<>(food);
+    public GameUpdateMsg getGameEntitiesMsg(Set<PointGameData> gameData, Direction direction, int gridX, int gridY, int worldEventCountdown){
 
-        return new GameUpdateMsg(foodCopy, snakes, networkId, gridX, gridY, worldEventCountdown);
+        return new GameUpdateMsg(gameData, direction, networkId, gridX, gridY, worldEventCountdown);
     }
 
     public GameStateMsg getGameStateMsg(ClientGameState gameState){
@@ -35,10 +35,9 @@ public class MsgFactory {
     }
 
     public InitGameMsg getInitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState,
-                                      Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, int worldEventCountdown){
-        Set<Vector2f> foodCopy = new HashSet<>(food);
+                                      Set<PointGameData> gameData, Direction direction, int worldEventCountdown){
 
-        return new InitGameMsg(playerCount, gridX, gridY, gameState,foodCopy, snakes, networkId, worldEventCountdown);
+        return new InitGameMsg(playerCount, gridX, gridY, gameState, gameData, direction, networkId, worldEventCountdown);
     }
 
     public RegisterMsg getRegisterMsg(){
@@ -53,5 +52,8 @@ public class MsgFactory {
         return new EnterGameMsg(networkId);
     }
 
+    public CheatGrowMsg getCheatGrowMsg(){
+        return new CheatGrowMsg(networkId);
+    }
 }
 

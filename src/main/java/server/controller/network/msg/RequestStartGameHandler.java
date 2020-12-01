@@ -1,6 +1,6 @@
 package server.controller.network.msg;
 
-import common.game.ClientGameState;
+import common.game.model.ClientGameState;
 import org.joml.Vector2f;
 import server.Server;
 import server.controller.game.Game;
@@ -30,16 +30,16 @@ public class RequestStartGameHandler implements Runnable {
 
         int gridSize = (int) (Math.log(server.getClients().size()) * 10);
         if(gridSize < 10) {
-            gridSize = 10;
+            gridSize = 11;
+        }
+        // ensure that the grid is uneven for diamond algorithm
+        if(gridSize % 2 == 0) {
+            gridSize = gridSize + 1;
         }
         server.setGame(new Game());
         server.getGame().init(gridSize, gridSize, server.getClients().keySet(), server);
 
-        Set<Vector2f> food = server.getGame().getFood().getFood();
-
-        server.broadcastMsg(server.getMsgFactory().getInitGameMsg(server.getClients().size(),
-                gridSize, gridSize, ClientGameState.GAME_ACTIVE, food, server.getGame().getPlayersInfo(),
-                server.getGame().getWorldEventCountdown()));
+        server.broadcastInitGameMsg(server.getClients().size(), ClientGameState.GAME_ACTIVE);
         initGameLock.unlock();
     }
 }

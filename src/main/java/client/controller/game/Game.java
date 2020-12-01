@@ -1,19 +1,14 @@
 package client.controller.game;
 
-import client.model.game.entity.Food;
-import client.model.game.entity.Player;
 import client.controller.network.NetworkManager;
-import common.game.ClientGameState;
-import common.game.Direction;
 import common.game.ai.AIController;
+import common.game.model.*;
 import common.network.MsgFactory;
-import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Game {
     private static final Logger logger = LogManager.getLogger(Game.class.getName());
@@ -27,8 +22,7 @@ public class Game {
 
     private Direction lastDirection;
 
-    private HashMap<UUID, Player> players = new HashMap<>();
-    private Food food;
+    private Set<PointGameData> gameData = new HashSet<>();
     private int playerCount;
 
 
@@ -39,27 +33,24 @@ public class Game {
         this.state = ClientGameState.GAME_MENU;
     }
 
-    public void start(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food,
-                      HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, int woldEventCountdown){
+    public void start(int playerCount, int gridX, int gridY, ClientGameState gameState,
+                      Set<PointGameData> gameData, Direction lastDirection, int woldEventCountdown){
         this.playerCount = playerCount;
         this.woldEventCountdown = woldEventCountdown;
         this.setGameState(gameState);
         this.setGridSize(gridX, gridY);
-        // on server side remove players from list
-        this.lastDirection = snakes.get(networkManager.getId()).getValue();
-        setFood(food);
-        setPlayers(snakes);
+        this.lastDirection = lastDirection;
+        setGameData(gameData);
     }
 
-    private void setPlayers(HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes) {
-        players = new HashMap<>();
-        snakes.entrySet().forEach(snake -> this.players.put(snake.getKey(),
-                new Player((LinkedList) snake.getValue().getKey())));
-    }
-
-    private void setFood(Set<Vector2f> food) {
-        this.food = new Food();
-        this.food.setFood(food);
+    private void setGameData(Set<PointGameData> gameData) {
+        this.gameData = gameData;
+        logger.debug("new data");
+        for (PointGameData pointGameData : gameData) {
+            if(pointGameData instanceof PointWall) {
+                logger.debug(pointGameData.getX() + " " + pointGameData.getY());
+            }
+        }
     }
 
     private void setGridSize(int gridX, int gridY){
@@ -71,24 +62,36 @@ public class Game {
         this.state = state;
     }
 
-    public void update(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> players, int gridX,
+    public void update(Set<PointGameData> gameData, Direction lastDirection, int gridX,
                        int gridY, int woldEventCountdown){
-        if(players.containsKey(networkManager.getId())) {
-            this.lastDirection = players.get(networkManager.getId()).getValue();
-        }
+        this.lastDirection = lastDirection;
         this.woldEventCountdown = woldEventCountdown;
         setGridSize(gridX, gridY);
-        setFood(food);
-        setPlayers(players);
+        setGameData(gameData);
 
-        if(aiController != null && this.players.containsKey(networkManager.getId())) {
-            Set<LinkedList<Vector2f>> enemies = this.players.entrySet().stream()
-                    .filter(p -> p.getKey() != networkManager.getId())
-                    .map(player -> player.getValue().getSnakeBody())
-                    .collect(Collectors.toCollection(HashSet::new));
-            LinkedList<Vector2f> player = this.players.get(networkManager.getId()).getSnakeBody();
-
-            Direction nextDirection = aiController.getNextMove(this.food.getFood(),enemies,player,
+        Set<Vector2f> enemies = new HashSet<>();
+        Set<Vector2f> food = new HashSet<>();
+        Set<Vector2f> playerBody = new HashSet<>();
+        Vector2f playerHead = null;
+        for (PointGameData point : gameData) {
+            if(point instanceof PointSnake) {
+                PointSnake pointSnake = (PointSnake) point;
+                if(pointSnake.getUuid() == networkManager.getId()) {
+                    if(pointSnake.isHead()) {
+                        playerHead = new Vector2f(point.getX(), point.getY());
+                    } else {
+                        playerBody.add(new Vector2f(point.getX(), point.getY()));
+                    }
+                } else {
+                    enemies.add(new Vector2f(point.getX(), point.getY()));
+                }
+            }
+            if(point instanceof PointFood) {
+                food.add(new Vector2f(point.getX(), point.getY()));
+            }
+        }
+        if(aiController != null && playerHead != null) {
+            Direction nextDirection = aiController.getNextMove(food, enemies, playerBody, playerHead,
                     this.lastDirection, this.GridX, this.GridY, this.woldEventCountdown);
             networkManager.sendMessage(msgFactory.getMoveMsg(nextDirection));
         }
@@ -107,11 +110,7 @@ public class Game {
         return GridY;
     }
 
-    public HashMap<UUID, Player> getPlayers() {
-        return players;
-    }
-
-    public Food getFood() {
-        return food;
+    public Set<PointGameData> getGameData() {
+        return gameData;
     }
 }

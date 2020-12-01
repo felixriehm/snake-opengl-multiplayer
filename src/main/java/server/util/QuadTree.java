@@ -1,5 +1,6 @@
 package server.util;
 
+import common.game.model.PointGameData;
 import javafx.util.Pair;
 
 import java.util.*;
@@ -134,10 +135,10 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
         /**
          * Snake multiplayer project specific: altered version of insert
          */
-        public Pair<P, Boolean> insertAltered(double x, double y, UUID uuid, boolean isHead) {
-            XYPoint xyPoint = new XYPointAltered(x,y,uuid, isHead);
+        public Pair<P, Boolean> insertGameData(double x, double y, PointGameData data) {
+            XYPoint xyPoint = new XYPointGameData(x,y,data);
 
-            return root.insertAltered((P)xyPoint);
+            return root.insertGameData((P)xyPoint);
         }
 
         /**
@@ -207,7 +208,7 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
             /**
              * Snake multiplayer project specific: altered version of insert
              */
-            protected Pair<XY, Boolean> insertAltered(XY p) {
+            protected Pair<XY, Boolean> insertGameData(XY p) {
                 // Ignore objects which do not belong in this quad tree
                 if (!aabb.containsPoint(p)) {
                     return new Pair<>(null, false); // object cannot be added
@@ -225,7 +226,7 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
                 // Otherwise, we need to subdivide then add the point to whichever node will accept it
                 if (isLeaf() && height<maxHeight)
                     subdivide();
-                return insertIntoChildrenAltered(p);
+                return insertGameDataIntoChildren(p);
             }
 
             /**
@@ -334,11 +335,11 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
             /**
              * Snake multiplayer project specific: altered version of insertIntoChildrenAltered
              */
-            private Pair<XY,Boolean> insertIntoChildrenAltered(XY p) {
+            private Pair<XY,Boolean> insertGameDataIntoChildren(XY p) {
                 Pair<XY,Boolean> result = null;
 
                 Pair<XY,Boolean> tmp;
-                tmp = northWest.insertAltered(p);
+                tmp = northWest.insertGameData(p);
                 if (tmp.getValue()) {
                     return new Pair<>(p, true);
                 } else {
@@ -347,7 +348,7 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
                     }
                 }
 
-                tmp = northEast.insertAltered(p);
+                tmp = northEast.insertGameData(p);
                 if (tmp.getValue()) {
                     return new Pair<>(p, true);
                 } else {
@@ -356,7 +357,7 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
                     }
                 }
 
-                tmp = southWest.insertAltered(p);
+                tmp = southWest.insertGameData(p);
                 if (tmp.getValue()) {
                     return new Pair<>(p, true);
                 } else {
@@ -365,7 +366,7 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
                     }
                 }
 
-                tmp = southEast.insertAltered(p);
+                tmp = southEast.insertGameData(p);
                 if (tmp.getValue()) {
                     return new Pair<>(p, true);
                 } else {
@@ -599,7 +600,7 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
             }
 
             @Override
-            protected Pair<AABB, Boolean> insertAltered(AABB aabb) {
+            protected Pair<AABB, Boolean> insertGameData(AABB aabb) {
                 return null;
             }
 
@@ -740,7 +741,7 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
         /**
          * Snake multiplayer project specific: altered version of insertAltered
          */
-        protected abstract Pair<G, Boolean> insertAltered(G g);
+        protected abstract Pair<G, Boolean> insertGameData(G g);
 
         /**
          * Remove object from tree.
@@ -904,21 +905,16 @@ public abstract class QuadTree<G extends QuadTree.XYPoint> {
     /**
      * Snake multiplayer project specific: altered version of XYPoint
      */
-    public static class XYPointAltered extends XYPoint {
-        private final UUID uuid;
-        private final boolean isHead;
+    public static class XYPointGameData<D extends PointGameData> extends XYPoint {
+        private final Object data;
 
-        public XYPointAltered(double x, double y, UUID uuid, boolean isHead) {
+        public XYPointGameData(double x, double y, D data) {
             super(x, y);
-            this.uuid = uuid;
-            this.isHead = isHead;
-        }
-        public UUID getUUID() {
-            return uuid;
+            this.data = data;
         }
 
-        public boolean isHead() {
-            return isHead;
+        public Object getData() {
+            return data;
         }
     }
 

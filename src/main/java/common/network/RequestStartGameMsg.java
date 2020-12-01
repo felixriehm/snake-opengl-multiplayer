@@ -1,7 +1,5 @@
 package common.network;
 
-import common.game.Direction;
-
 import java.util.UUID;
 
 public class RequestStartGameMsg extends BaseMsg{

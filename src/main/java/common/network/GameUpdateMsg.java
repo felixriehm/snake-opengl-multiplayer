@@ -1,42 +1,39 @@
 package common.network;
 
-import common.game.Direction;
-import javafx.util.Pair;
-import org.joml.Vector2f;
+import common.game.model.Direction;
+import common.game.model.PointGameData;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 public class GameUpdateMsg extends BaseMsg{
     private static final long serialVersionUID = 1L;
 
-    private final Set<Vector2f> food;
-    private final HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes;
+    private final Set<PointGameData> gameData;
+    private final Direction direction;
     private final int gridX;
     private final int gridY;
     private final int worldEventCountdown;
 
-    public GameUpdateMsg(Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, UUID sender, int gridX, int gridY, int worldEventCountdown) {
+    public GameUpdateMsg(Set<PointGameData> gameData, Direction direction, UUID sender, int gridX, int gridY, int worldEventCountdown) {
         super(sender);
-        this.food = food;
-        this.snakes = snakes;
+        this.gameData = gameData;
         this.gridX = gridX;
         this.gridY = gridY;
         this.worldEventCountdown = worldEventCountdown;
-    }
-
-    public Set<Vector2f> getFood() {
-        return food;
+        this.direction = direction;
     }
 
     public int getWorldEventCountdown() {
         return worldEventCountdown;
     }
 
-    public HashMap<UUID, Pair<List<Vector2f>, Direction>> getSnakes() {
-        return snakes;
+    public Set<PointGameData> getGameData() {
+        return gameData;
+    }
+
+    public Direction getDirection() {
+        return direction;
     }
 
     public int getGridX() {

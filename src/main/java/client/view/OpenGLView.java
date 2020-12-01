@@ -6,8 +6,7 @@ import client.view.shader.Shader;
 import client.controller.network.NetworkManager;
 import client.view.manager.ResourceManager;
 import common.Configuration;
-import common.game.ClientGameState;
-import common.game.Direction;
+import common.game.model.*;
 import common.network.MsgFactory;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -56,6 +55,10 @@ public class OpenGLView {
             Float.parseFloat(Configuration.getInstance().getProperty("game.food.color.r")),
             Float.parseFloat(Configuration.getInstance().getProperty("game.food.color.g")),
             Float.parseFloat(Configuration.getInstance().getProperty("game.food.color.b")));
+    public final Vector3f WALL_COLOR = new Vector3f(
+            Float.parseFloat(Configuration.getInstance().getProperty("game.wall.color.r")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.wall.color.g")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.wall.color.b")));
     private IPrimitiveRenderer squareRenderer;
     private IPrimitiveRenderer triangleRenderer;
     private IPrimitiveRenderer circleRenderer;
@@ -202,12 +205,35 @@ public class OpenGLView {
         if (snake.getGridX() > 0 )
         {
             int cellSize = SCREEN_WIDTH / snake.getGridX();
-            if(snake.getPlayers() != null) {
-                snake.getPlayers().entrySet().forEach(player -> player.getValue()
-                        .draw(squareRenderer, cellSize, generatePlayerColor(player.getKey()), new Vector2f(cellSize, cellSize)));
-            }
-            if(snake.getFood() != null) {
-                snake.getFood().draw(circleRenderer, cellSize, FOOD_COLOR, new Vector2f(cellSize, cellSize));
+            if(snake.getGameData() != null) {
+                for(PointGameData point : snake.getGameData()) {
+                    if(point instanceof PointSnake) {
+                        PointSnake pointSnake = (PointSnake) point;
+                        squareRenderer.draw(
+                                new Vector2f(point.getX() * cellSize, point.getY() * cellSize),
+                                new Vector2f(cellSize, cellSize),
+                                0f,
+                                generatePlayerColor(pointSnake.getUuid())
+                        );
+                    }
+                    if(point instanceof PointFood) {
+                        circleRenderer.draw(
+                                new Vector2f(point.getX() * cellSize  + cellSize/2, point.getY() * cellSize + cellSize / 2 ),
+                                new Vector2f(cellSize, cellSize),
+                                0f,
+                                FOOD_COLOR
+                        );
+                    }
+
+                    if(point instanceof PointWall) {
+                        triangleRenderer.draw(
+                                new Vector2f(point.getX() * cellSize + cellSize/2, point.getY() * cellSize + cellSize/2),
+                                new Vector2f(cellSize, cellSize),
+                                0f,
+                                WALL_COLOR
+                        );
+                    }
+                }
             }
 
             // draw grid
@@ -273,6 +299,10 @@ public class OpenGLView {
             if (this.keys[GLFW_KEY_S] && !keysProcessed[GLFW_KEY_S]) {
                 networkManager.sendMessage(msgFactory.getMoveMsg(Direction.DOWN));
                 keysProcessed[GLFW_KEY_S] = true;
+            }
+            if (this.keys[GLFW_KEY_S] && !keysProcessed[GLFW_KEY_G]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg());
+                keysProcessed[GLFW_KEY_G] = true;
             }
         }
 

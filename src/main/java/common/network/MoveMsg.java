@@ -1,6 +1,6 @@
 package common.network;
 
-import common.game.Direction;
+import common.game.model.Direction;
 
 import java.util.UUID;
 

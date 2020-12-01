@@ -1,4 +1,4 @@
-package common.game;
+package common.game.model;
 
 public enum ClientGameState {
     GAME_ACTIVE,

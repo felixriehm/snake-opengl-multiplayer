@@ -6,12 +6,15 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import common.Configuration;
+import common.game.model.ClientGameState;
+import common.game.model.PointGameData;
 import common.network.BaseMsg;
 import common.network.MsgFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import server.controller.game.Game;
 import server.controller.network.ClientManager;
+import server.util.QuadTree;
 
 public class Server <T extends BaseMsg>  {
     private static final Logger logger = LogManager.getLogger(Server.class.getName());
@@ -74,6 +77,42 @@ public class Server <T extends BaseMsg>  {
 
     public synchronized void broadcastMsg(T msg) {
         this.clients.entrySet().forEach(client -> client.getValue().sendMessage(msg));
+    }
+
+    public synchronized void broadcastInitGameMsg(int playerCount, ClientGameState gameState) {
+        QuadTree.PointRegionQuadTree tree = game.generateGameDataQuadTree();
+
+        this.clients.entrySet().forEach(client -> {
+            int playerGridX = game.calculatePlayerGrid(game.getPlayers().get(client.getKey()));
+            int playerGridY = playerGridX;
+
+            client.getValue().sendMessage(msgFactory.getInitGameMsg(
+                    playerCount,
+                    playerGridX,
+                    playerGridY,
+                    gameState,
+                    game.getGameData(tree, game.getPlayers().get(client.getKey())),
+                    game.getPlayers().get(client.getKey()).getLastDirection(),
+                    game.getWorldEventCountdown()
+            ));
+        });
+    }
+
+    public synchronized void broadcastGameUpdateMsg() {
+        QuadTree.PointRegionQuadTree tree = game.generateGameDataQuadTree();
+
+        this.clients.entrySet().forEach(client -> {
+            int playerGridX = game.calculatePlayerGrid(game.getPlayers().get(client.getKey()));
+            int playerGridY = playerGridX;
+
+            client.getValue().sendMessage(msgFactory.getGameEntitiesMsg(
+                    game.getGameData(tree, game.getPlayers().get(client.getKey())),
+                    game.getPlayers().get(client.getKey()).getLastDirection(),
+                    playerGridX,
+                    playerGridY,
+                    game.getWorldEventCountdown()
+            ));
+        });
     }
 
     public void sendMsgToClient() {

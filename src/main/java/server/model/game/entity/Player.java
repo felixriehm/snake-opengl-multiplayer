@@ -1,6 +1,6 @@
 package server.model.game.entity;
 
-import common.game.Direction;
+import common.game.model.Direction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Random;
@@ -46,36 +46,38 @@ public class Player {
     }
 
     public void moveSnake(){
-        if(!this.body.isEmpty()){
-            if(body.size() > 1) {
-                if(this.nextDirection == this.lastDirection.opposite()) {
-                    this.nextDirection = this.nextDirection.opposite();
+        synchronized (this) {
+            if (!this.body.isEmpty()) {
+                if (body.size() > 1) {
+                    if (this.nextDirection == this.lastDirection.opposite()) {
+                        this.nextDirection = this.nextDirection.opposite();
+                    }
                 }
-            }
-            this.lastDirection = this.nextDirection;
-            Vector2f lastSegment = this.body.getLast();
-            this.lastSegmentOfLastMove = new Vector2f(lastSegment.x, lastSegment.y);
+                this.lastDirection = this.nextDirection;
+                Vector2f lastSegment = this.body.getLast();
+                this.lastSegmentOfLastMove = new Vector2f(lastSegment.x, lastSegment.y);
 
-            Vector2f firstSegment = this.body.getFirst();
-            Vector2f newHead = new Vector2f(firstSegment.x, firstSegment.y);
-            switch(this.nextDirection) {
-                case UP:
-                    newHead.y = --newHead.y;
-                    break;
-                case DOWN:
-                    newHead.y = ++newHead.y;
-                    break;
-                case RIGHT:
-                    newHead.x = ++newHead.x;
-                    break;
-                case LEFT:
-                    newHead.x = --newHead.x;
-                    break;
-                default:
-                    break;
+                Vector2f firstSegment = this.body.getFirst();
+                Vector2f newHead = new Vector2f(firstSegment.x, firstSegment.y);
+                switch (this.nextDirection) {
+                    case UP:
+                        newHead.y = --newHead.y;
+                        break;
+                    case DOWN:
+                        newHead.y = ++newHead.y;
+                        break;
+                    case RIGHT:
+                        newHead.x = ++newHead.x;
+                        break;
+                    case LEFT:
+                        newHead.x = --newHead.x;
+                        break;
+                    default:
+                        break;
+                }
+                body.addFirst(newHead);
+                body.removeLast();
             }
-            body.addFirst(newHead);
-            body.removeLast();
         }
     }
 
@@ -107,6 +109,17 @@ public class Player {
     }
 
     public void grow(){
-        this.body.add(this.lastSegmentOfLastMove);
+        synchronized (this) {
+            // ensure grow cheat works
+            if(this.lastSegmentOfLastMove == null || this.lastSegmentOfLastMove.equals(body.getLast())){
+                Vector2f newCell = new Vector2f(body.getLast().x - 1, body.getLast().y);
+                this.body.add(newCell);
+                this.lastSegmentOfLastMove = newCell;
+                return;
+            }
+
+            // normal behaviour
+            this.body.add(this.lastSegmentOfLastMove);
+        }
     }
 }

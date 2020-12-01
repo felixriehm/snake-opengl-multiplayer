@@ -9,6 +9,15 @@
         <Logger name="RunMultipleAIClients" level="debug"  additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
+        <Logger name="client.controller.game.Game" level="off"  additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="server.controller.game.Game" level="off"  additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="server.controller.network.msg.CheatGrowMsgHandler" level="debug"  additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Root level="off" additivity="false">
             <AppenderRef ref="Console"/>
         </Root>

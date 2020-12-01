@@ -1,7 +1,8 @@
 package common.network;
 
-import common.game.ClientGameState;
-import common.game.Direction;
+import common.game.model.ClientGameState;
+import common.game.model.Direction;
+import common.game.model.PointGameData;
 import javafx.util.Pair;
 import org.joml.Vector2f;
 
@@ -15,18 +16,18 @@ public class InitGameMsg extends BaseMsg {
     private final int gridX;
     private final int gridY;
     private final ClientGameState gameState;
-    private final Set<Vector2f> food;
-    private final HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes;
+    private final Set<PointGameData> gameData;
+    private final Direction lastDirection;
     private final int worldEventCountdown;
 
-    public InitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<Vector2f> food, HashMap<UUID, Pair<List<Vector2f>, Direction>> snakes, UUID sender, int worldEventCountdown){
+    public InitGameMsg(int playerCount, int gridX, int gridY, ClientGameState gameState, Set<PointGameData> gameData, Direction direction, UUID sender, int worldEventCountdown){
         super(sender);
         this.playerCount = playerCount;
         this.gridX = gridX;
         this.gridY = gridY;
         this.gameState = gameState;
-        this.food = food;
-        this.snakes = snakes;
+        this.gameData = gameData;
+        this.lastDirection = direction;
         this.worldEventCountdown = worldEventCountdown;
     }
 
@@ -54,11 +55,11 @@ public class InitGameMsg extends BaseMsg {
         return gameState;
     }
 
-    public Set<Vector2f> getFood() {
-        return food;
+    public Set<PointGameData> getGameData() {
+        return gameData;
     }
 
-    public HashMap<UUID, Pair<List<Vector2f>, Direction>> getSnakes() {
-        return snakes;
+    public Direction getLastDirection() {
+        return lastDirection;
     }
 }

@@ -1,6 +1,6 @@
 package common.network;
 
-import common.game.ClientGameState;
+import common.game.model.ClientGameState;
 
 import java.util.UUID;
 

@@ -45,9 +45,9 @@ public class TriangleRenderer extends PrimitiveRenderer implements IPrimitiveRen
 
         ByteBuffer bb = BufferUtils.createByteBuffer(4 * 2 * 3);
         FloatBuffer fv = bb.asFloatBuffer();
-        fv.put(0.0f).put(1.0f);
-        fv.put(1.0f).put(0.0f);
-        fv.put(0.0f).put(0.0f);
+        fv.put(-0.5f).put(-0.5f);
+        fv.put(0.5f).put(-0.5f);
+        fv.put(0.0f).put(0.5f);
 
         this.VAO = glGenVertexArrays();
         VBO = glGenBuffers();
