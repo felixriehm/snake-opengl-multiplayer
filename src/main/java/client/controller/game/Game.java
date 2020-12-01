@@ -45,12 +45,6 @@ public class Game {
 
     private void setGameData(Set<PointGameData> gameData) {
         this.gameData = gameData;
-        logger.debug("new data");
-        for (PointGameData pointGameData : gameData) {
-            if(pointGameData instanceof PointWall) {
-                logger.debug(pointGameData.getX() + " " + pointGameData.getY());
-            }
-        }
     }
 
     private void setGridSize(int gridX, int gridY){
@@ -76,7 +70,7 @@ public class Game {
         for (PointGameData point : gameData) {
             if(point instanceof PointSnake) {
                 PointSnake pointSnake = (PointSnake) point;
-                if(pointSnake.getUuid() == networkManager.getId()) {
+                if(pointSnake.getUuid().equals(networkManager.getId())) {
                     if(pointSnake.isHead()) {
                         playerHead = new Vector2f(point.getX(), point.getY());
                     } else {
@@ -93,6 +87,7 @@ public class Game {
         if(aiController != null && playerHead != null) {
             Direction nextDirection = aiController.getNextMove(food, enemies, playerBody, playerHead,
                     this.lastDirection, this.GridX, this.GridY, this.woldEventCountdown);
+            logger.debug(nextDirection);
             networkManager.sendMessage(msgFactory.getMoveMsg(nextDirection));
         }
     }

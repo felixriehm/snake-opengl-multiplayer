@@ -300,7 +300,7 @@ public class OpenGLView {
                 networkManager.sendMessage(msgFactory.getMoveMsg(Direction.DOWN));
                 keysProcessed[GLFW_KEY_S] = true;
             }
-            if (this.keys[GLFW_KEY_S] && !keysProcessed[GLFW_KEY_G]) {
+            if (this.keys[GLFW_KEY_G] && !keysProcessed[GLFW_KEY_G]) {
                 networkManager.sendMessage(msgFactory.getCheatGrowMsg());
                 keysProcessed[GLFW_KEY_G] = true;
             }

@@ -159,6 +159,10 @@ public class Game {
         return localSpace;
     }
 
+    public Set<PointGameData> getGameData(QuadTree.PointRegionQuadTree tree) {
+        return getPlayerView(tree);
+    }
+
     private Set<PointGameData> transformWorldSpaceToLocalSpace(Set<PointGameData> points, Player player){
         Vector2f playerHead = player.getSnakeHead();
         float viewEdgeToGridEdgeDistanceX = getActualViewDistanceX(playerHead, player.getSnakeBody().size());
@@ -178,6 +182,16 @@ public class Game {
         points = (Set<PointGameData>) tree
                 .queryRange(getActualViewDistanceX(head, snakeLength), getActualViewDistanceY(head, snakeLength),
                         playerGridX, playerGridY)
+                .stream().map(point -> ((QuadTree.XYPointGameData)point).getData())
+                .collect(Collectors.toSet());
+        return points;
+    }
+
+    private Set<PointGameData> getPlayerView(QuadTree.PointRegionQuadTree tree) {
+        Set<PointGameData> points = new HashSet<>();
+        points = (Set<PointGameData>) tree
+                .queryRange(0, 0,
+                        GridX, GridY)
                 .stream().map(point -> ((QuadTree.XYPointGameData)point).getData())
                 .collect(Collectors.toSet());
         return points;
@@ -354,5 +368,13 @@ public class Game {
     public int calculatePlayerGrid(Player player){
         //TODO: only when ...
         return player.getSnakeBody().size()*2 + Game.PLAYER_VIEW_DISTANCE*2 - 1;
+    }
+
+    public int getGridX() {
+        return GridX;
+    }
+
+    public int getGridY() {
+        return GridY;
     }
 }

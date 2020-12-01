@@ -27,10 +27,9 @@ public class CheatGrowMsgHandler implements Runnable {
 
         // if player has not lost and is not removed
         if(player != null) {
-            logger.debug("start: grow cheat");
+            logger.debug("grow cheat");
             player.grow();
             server.broadcastGameUpdateMsg();
-            logger.debug("end: grow cheat");
         }
     }
 }

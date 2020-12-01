@@ -11,7 +11,7 @@ public class RunMultipleAIClients {
     public static void main(String[] args) throws InterruptedException {
         Runnable runnable =
                 () -> { Client.main(new String[]{"ai"}); };
-        for (int i = 0; i < 99; i++) {
+        for (int i = 0; i < 20; i++) {
             new Thread(runnable).start();
             TimeUnit.MILLISECONDS.sleep(20);
         }
