@@ -16,7 +16,7 @@ public class Player {
     Direction nextDirection;
     Direction lastDirection;
 
-    public Player(Set<Vector2f> freeCells, int gridX, int gridY) {
+    public Player(Set<Vector2f> freeCells) {
         this.nextDirection = Direction.NONE;
 
         int size = freeCells.size();
@@ -121,5 +121,10 @@ public class Player {
             // normal behaviour
             this.body.add(this.lastSegmentOfLastMove);
         }
+    }
+
+    @Override
+    public String toString(){
+        return this.getSnakeBody().toString();
     }
 }

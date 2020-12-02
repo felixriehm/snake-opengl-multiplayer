@@ -1,5 +1,7 @@
 package common.game.model;
 
+import org.joml.Vector2f;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +30,16 @@ public enum Direction {
             case DOWN: return new HashSet<>(Arrays.asList(UP, RIGHT, LEFT));
             case LEFT: return new HashSet<>(Arrays.asList(DOWN, RIGHT, UP));
             default: return new HashSet<>(Arrays.asList(DOWN, RIGHT, LEFT, UP));
+        }
+    }
+
+    public Vector2f nextPosition(Vector2f currentPosition) {
+        switch(this) {
+            case UP: return new Vector2f(currentPosition.x, currentPosition.y - 1);
+            case RIGHT: return new Vector2f(currentPosition.x + 1, currentPosition.y);
+            case DOWN: return new Vector2f(currentPosition.x, currentPosition.y + 1);
+            case LEFT: return new Vector2f(currentPosition.x - 1, currentPosition.y);
+            default: return new Vector2f(currentPosition.x, currentPosition.y);
         }
     }
 }

@@ -1,10 +1,9 @@
 package common.network;
 
+import common.game.model.CheatCode;
 import common.game.model.ClientGameState;
 import common.game.model.Direction;
 import common.game.model.PointGameData;
-import javafx.util.Pair;
-import org.joml.Vector2f;
 
 import java.util.*;
 
@@ -52,8 +51,8 @@ public class MsgFactory {
         return new EnterGameMsg(networkId);
     }
 
-    public CheatGrowMsg getCheatGrowMsg(){
-        return new CheatGrowMsg(networkId);
+    public CheatCodeMsg getCheatGrowMsg(CheatCode cheatCode){
+        return new CheatCodeMsg(networkId, cheatCode);
     }
 }
 

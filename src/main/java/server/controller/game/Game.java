@@ -37,8 +37,9 @@ public class Game {
     private MsgFactory msgFactory;
     private Server server;
     private Game gameReference;
+    private UUID gameInitiator;
     private Timer updateTimer;
-    private boolean gameInitiated = false;
+    private HashMap<CheatCode, Boolean> cheatCodes;
     private int worldEventCountdown = GAME_WORLD_EVENT_COUNTDOWN;
     private int playerCount = 0;
 
@@ -48,11 +49,11 @@ public class Game {
         this.server = server;
         this.worldEventCountdown = GAME_WORLD_EVENT_COUNTDOWN;
         this.msgFactory = this.server.getMsgFactory();
-        this.gameInitiated = true;
         this.state = ServerGameState.GAME_STARTED;
         this.GridX = gridX;
         this.GridY = gridY;
         this.playerCount = clients.size();
+        this.cheatCodes = new HashMap<>();
 
         for (int x = 0; x < this.GridX; x++)
         {
@@ -90,10 +91,10 @@ public class Game {
                 freeCells.remove(new Vector2f(x,y));
             }
         }
-        clients.forEach(clientId -> this.players.put(clientId, new Player(freeCells, GridX, GridY)));
+        clients.forEach(clientId -> this.players.put(clientId, new Player(freeCells)));
 
         wall = new Wall();
-        wall.initGreatWall(gridX, gridY);
+        wall.initGreatWall(0,0, gridX, gridY);
         this.availableGridCells.removeAll(wall.getGreatWall());
 
         // spawn food, needs to happen after Player init
@@ -121,19 +122,15 @@ public class Game {
         return worldEventCountdown;
     }
 
-    public boolean isInitiated(){
-        return gameInitiated;
-    }
-
     public void update()
     {
-        if (this.state == ServerGameState.GAME_STARTED)
+        if (this.state == ServerGameState.GAME_STARTED && !isCheatCodeActivated(CheatCode.TOGGLE_UPDATE))
         {
             // update objects
             players.values().forEach(player -> player.moveSnake());
 
             // process world event
-            if(GAME_WORLD_EVENT_ENABLED) {
+            if(GAME_WORLD_EVENT_ENABLED || isCheatCodeActivated(CheatCode.TOGGLE_WORLD_EVENT)) {
                 this.doWorldEvent();
             }
 
@@ -167,10 +164,21 @@ public class Game {
         Vector2f playerHead = player.getSnakeHead();
         float viewEdgeToGridEdgeDistanceX = getActualViewDistanceX(playerHead, player.getSnakeBody().size());
         float viewEdgeToGridEdgeDistanceY = getActualViewDistanceY(playerHead, player.getSnakeBody().size());
+        HashSet<PointGameData> newPoints = new HashSet<>();
         for(PointGameData point : points) {
-            point.setXY(point.getX() - viewEdgeToGridEdgeDistanceX, point.getY() - viewEdgeToGridEdgeDistanceY);
+            if(point instanceof PointWall){
+                newPoints.add(new PointWall(point.getX() - viewEdgeToGridEdgeDistanceX, point.getY() - viewEdgeToGridEdgeDistanceY));
+            }
+            if(point instanceof PointSnake){
+                PointSnake pointSnake = (PointSnake) point;
+                newPoints.add(new PointSnake(point.getX() - viewEdgeToGridEdgeDistanceX,
+                        point.getY() - viewEdgeToGridEdgeDistanceY, pointSnake.getUuid(), pointSnake.isHead()));
+            }
+            if(point instanceof PointFood){
+                newPoints.add(new PointFood(point.getX() - viewEdgeToGridEdgeDistanceX, point.getY() - viewEdgeToGridEdgeDistanceY));
+            }
         }
-        return points;
+        return newPoints;
     }
 
     private Set<PointGameData> getPlayerView(QuadTree.PointRegionQuadTree tree, Player player) {
@@ -220,10 +228,6 @@ public class Game {
         return tree;
     }
 
-    public Set<PointGameData> getAllGameData(QuadTree.PointRegionQuadTree tree){
-        return null; //TODO: implement, call when death
-    }
-
     private float getActualViewDistanceX(Vector2f head, int snakeLength){
         return head.x - (snakeLength - 1) - PLAYER_VIEW_DISTANCE;
     }
@@ -234,49 +238,81 @@ public class Game {
 
     private void doWorldEvent() {
         if(worldEventCountdown == 0) {
-            this.GridX = this.GridX - (GAME_WORLD_EVENT_GRID_DECREASE*2);
-            this.GridY = this.GridY - (GAME_WORLD_EVENT_GRID_DECREASE*2);
-
-            availableGridCells = new HashSet();
-            for (int x = 0; x < this.GridX; x++)
-            {
-                for (int y = 0; y < this.GridY; y++)
-                {
-                    availableGridCells.add(new Vector2f(x,y));
-                }
-            }
-
-            this.food.setFood(this.food.getFood().stream()
-                    .map(foodCell -> new Vector2f(foodCell.x - GAME_WORLD_EVENT_GRID_DECREASE,
-                            foodCell.y - GAME_WORLD_EVENT_GRID_DECREASE))
-                    .collect(Collectors.toCollection(HashSet::new)));
-            this.food.setAvailableGridCells(availableGridCells);
-
-            ArrayList<Vector2f> deletedFood = new ArrayList();
-            for(Vector2f foodCell : this.food.getFood()) {
-                if(foodCell.x < 0 || foodCell.y < 0 || foodCell.x >= this.GridX || foodCell.y >= this.GridY) {
-                    deletedFood.add(foodCell);
-                }
-            }
-
-            deletedFood.forEach(foodCell -> {
-                this.food.removeFood(foodCell);
-                this.food.spawnFood(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
-            });
-
-            this.players.values().forEach(player -> {
-                    player.setSnakeBody(player.getSnakeBody().stream()
-                            .map(cell -> new Vector2f(cell.x - GAME_WORLD_EVENT_GRID_DECREASE,
-                                    cell.y - GAME_WORLD_EVENT_GRID_DECREASE))
-                            .collect(Collectors.toCollection(LinkedList::new)));
-                    Vector2f lastSegmentOfLastMove = player.getLastSegmentOfLastMove();
-                    player.setLastSegmentOfLastMove(new Vector2f(lastSegmentOfLastMove.x - GAME_WORLD_EVENT_GRID_DECREASE,
-                            lastSegmentOfLastMove.y - GAME_WORLD_EVENT_GRID_DECREASE));
-            });
-
+            decreaseGreatWall();
             worldEventCountdown = GAME_WORLD_EVENT_COUNTDOWN;
         }
         worldEventCountdown--;
+    }
+
+    public void increaseGreatWall() {
+        Vector2f currentStartPoint = this.wall.getGreatWallStartPoint();
+        if(currentStartPoint.x - GAME_WORLD_EVENT_GRID_DECREASE < 0 ||
+                currentStartPoint.y - GAME_WORLD_EVENT_GRID_DECREASE < 0 ) {
+            return;
+        }
+        this.wall.initGreatWall(currentStartPoint.x - GAME_WORLD_EVENT_GRID_DECREASE,
+                currentStartPoint.y - GAME_WORLD_EVENT_GRID_DECREASE,
+                this.wall.getGreatWallWidth() + GAME_WORLD_EVENT_GRID_DECREASE,
+                this.wall.getGreatWallHeight() + GAME_WORLD_EVENT_GRID_DECREASE
+        );
+
+        Vector2f newStartPoint = this.wall.getGreatWallStartPoint();
+        availableGridCells = new HashSet();
+        for (float x = newStartPoint.x + 1; x < this.wall.getGreatWallWidth() - 1; x++)
+        {
+            for (float y = newStartPoint.y + 1; y < this.wall.getGreatWallHeight() - 1; y++)
+            {
+                availableGridCells.add(new Vector2f(x,y));
+            }
+        }
+        this.food.setAvailableGridCells(availableGridCells);
+    }
+
+    public void decreaseGreatWall() {
+        Vector2f currentStartPoint = this.wall.getGreatWallStartPoint();
+        this.wall.initGreatWall(currentStartPoint.x + GAME_WORLD_EVENT_GRID_DECREASE,
+                currentStartPoint.y + GAME_WORLD_EVENT_GRID_DECREASE,
+                this.wall.getGreatWallWidth() - GAME_WORLD_EVENT_GRID_DECREASE,
+                this.wall.getGreatWallHeight() - GAME_WORLD_EVENT_GRID_DECREASE
+        );
+
+        logger.debug(wall.getGreatWall());
+        logger.debug(food.getFood());
+
+        Vector2f newStartPoint = this.wall.getGreatWallStartPoint();
+        float startPointX = newStartPoint.x + 1;
+        float startPointY = newStartPoint.y + 1;
+        QuadTree.PointRegionQuadTree tree = new QuadTree.PointRegionQuadTree(
+                startPointX,
+                startPointY,
+                Math.abs(this.wall.getGreatWallWidth() - 1 - startPointX),
+                Math.abs(this.wall.getGreatWallHeight() - 1 - startPointY)
+        );
+
+        Set<Vector2f> foodSet = this.food.getFood();
+        Set<Vector2f> removeFood = new HashSet<>();
+        for(Vector2f food : foodSet){
+            if(!tree.insert(food.x, food.y)){
+                logger.debug("cant insert");
+                removeFood.add(food);
+            }
+        }
+
+        logger.debug(tree);
+
+        this.food.removeFood(removeFood);
+
+        availableGridCells = new HashSet();
+        for (float x = newStartPoint.x + 1; x < this.wall.getGreatWallWidth() - 1; x++)
+        {
+            for (float y = newStartPoint.y + 1; y < this.wall.getGreatWallHeight() - 1; y++)
+            {
+                availableGridCells.add(new Vector2f(x,y));
+            }
+        }
+        this.food.setAvailableGridCells(availableGridCells);
+
+        removeFood.forEach(food -> this.food.spawnFood(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet())));
     }
 
     public void checkWinCondition() {
@@ -331,11 +367,10 @@ public class Game {
         }
 
         removedPlayer.forEach(player -> {
-            players.remove(player);
-            ClientManager client = (ClientManager) this.server.getClients().get(player);
-            if(client != null) {
-                client.sendMessage(msgFactory.getGameStateMsg(ClientGameState.GAME_LOSS));
+            if(isCheatCodeActivated(CheatCode.PLAYER_IMMORTAL) && gameInitiator.equals(player)){
+                return;
             }
+            killPlayer(player);
         });
 
 
@@ -376,5 +411,73 @@ public class Game {
 
     public int getGridY() {
         return GridY;
+    }
+
+    public void setGameInitiator(UUID client) {
+        this.gameInitiator = client;
+    }
+
+    public UUID getGameInitiator() {
+        return this.gameInitiator;
+    }
+
+    public ServerGameState getState() {
+        return state;
+    }
+
+    public void toogleCheatCode(CheatCode cheatCode){
+        if(this.cheatCodes != null) {
+            Boolean result = this.cheatCodes.get(cheatCode);
+            if(result == null) {
+                this.cheatCodes.put(cheatCode, true);
+            } else {
+                this.cheatCodes.put(cheatCode, !result);
+            }
+        }
+    }
+
+    public boolean isCheatCodeActivated(CheatCode cheatCode) {
+        if(this.cheatCodes != null) {
+            Boolean result = this.cheatCodes.get(cheatCode);
+            if(result == null) {
+                return false;
+            } else {
+                return result;
+            }
+        }
+        return false;
+    }
+
+    public void spawnFood(){
+        this.food.spawnFood(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
+    }
+
+    public void shuffleFood(){
+        int size = food.getFood().size();
+        food.clearFood();
+
+        for (int i = 0; i < size; i++) {
+            food.spawnFood(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
+        }
+    }
+
+    public void killPlayer(UUID player){
+        players.remove(player);
+        ClientManager client = (ClientManager) this.server.getClients().get(player);
+        if(client != null) {
+            client.sendMessage(msgFactory.getGameStateMsg(ClientGameState.GAME_LOSS));
+        }
+    }
+
+    public void respawnPlayer(UUID player) {
+        //TODO: implement
+        /*
+        Set<Vector2f> freeCells = new HashSet<Vector2f>(availableGridCells);
+
+        freeCells.removeAll(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
+        this.players.put(player, new Player(freeCells));
+        ((ClientManager) server.getClients().get(player)).sendMessage(msgFactory.getGameStateMsg(ClientGameState.GAME_ACTIVE));
+        logger.debug(this.players.values());
+        */
     }
 }

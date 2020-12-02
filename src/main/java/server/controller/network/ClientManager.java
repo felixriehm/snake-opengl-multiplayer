@@ -4,7 +4,7 @@ import common.network.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import server.Server;
-import server.controller.network.msg.CheatGrowMsgHandler;
+import server.controller.network.msg.CheatCodeMsgHandler;
 import server.controller.network.msg.MoveMsgHandler;
 import server.controller.network.msg.RegisterMsgHandler;
 import server.controller.network.msg.RequestStartGameHandler;
@@ -62,7 +62,7 @@ public class ClientManager <T extends BaseMsg> implements Runnable {
                 }
 
                 if (received instanceof RequestStartGameMsg) {
-                    RequestStartGameHandler mtch = new RequestStartGameHandler(dos, server, initGameLock);
+                    RequestStartGameHandler mtch = new RequestStartGameHandler(dos, server, initGameLock, clientId);
                     Thread t = new Thread(mtch);
                     t.start();
                 }
@@ -73,8 +73,8 @@ public class ClientManager <T extends BaseMsg> implements Runnable {
                     t.start();
                 }
 
-                if (received instanceof CheatGrowMsg) {
-                    CheatGrowMsgHandler mtch = new CheatGrowMsgHandler((CheatGrowMsg) received, server);
+                if (received instanceof CheatCodeMsg) {
+                    CheatCodeMsgHandler mtch = new CheatCodeMsgHandler((CheatCodeMsg) received, server);
                     Thread t = new Thread(mtch);
                     t.start();
                 }

@@ -44,6 +44,10 @@ public class Food {
         this.availableGridCells = availableGridCells;
     }
 
+    public void clearFood() {
+        this.food.clear();
+    }
+
     public void setFood(Set<Vector2f> food){
         this.food = food;
     }

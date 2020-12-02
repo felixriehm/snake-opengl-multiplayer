@@ -65,6 +65,7 @@ public class Game {
 
         Set<Vector2f> enemies = new HashSet<>();
         Set<Vector2f> food = new HashSet<>();
+        Set<Vector2f> walls = new HashSet<>();
         Set<Vector2f> playerBody = new HashSet<>();
         Vector2f playerHead = null;
         for (PointGameData point : gameData) {
@@ -83,9 +84,12 @@ public class Game {
             if(point instanceof PointFood) {
                 food.add(new Vector2f(point.getX(), point.getY()));
             }
+            if(point instanceof PointWall) {
+                walls.add(new Vector2f(point.getX(), point.getY()));
+            }
         }
         if(aiController != null && playerHead != null) {
-            Direction nextDirection = aiController.getNextMove(food, enemies, playerBody, playerHead,
+            Direction nextDirection = aiController.getNextMove(food, walls, enemies, playerBody, playerHead,
                     this.lastDirection, this.GridX, this.GridY, this.woldEventCountdown);
             logger.debug(nextDirection);
             networkManager.sendMessage(msgFactory.getMoveMsg(nextDirection));

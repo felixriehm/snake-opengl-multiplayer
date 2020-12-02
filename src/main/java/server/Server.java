@@ -18,6 +18,8 @@ import server.controller.network.ClientManager;
 import server.model.game.entity.Player;
 import server.util.QuadTree;
 
+import static common.game.model.CheatCode.TOGGLE_MAX_VIEW;
+
 public class Server <T extends BaseMsg>  {
     private static final Logger logger = LogManager.getLogger(Server.class.getName());
     private final Lock initGameLock = new ReentrantLock();
@@ -105,11 +107,12 @@ public class Server <T extends BaseMsg>  {
 
         this.clients.entrySet().forEach(client -> {
             Player player = game.getPlayers().get(client.getKey());
-            int playerGridX = player == null ? game.getGridX() :
-                    game.calculatePlayerGrid(game.getPlayers().get(client.getKey()));
+            boolean maxView = player == null ||
+                    (game.isCheatCodeActivated(TOGGLE_MAX_VIEW) && client.getKey().equals(game.getGameInitiator()));
+            int playerGridX = maxView ? game.getGridX() : game.calculatePlayerGrid(player);
             int playerGridY = playerGridX;
 
-            Set<PointGameData> gameData = player == null ? game.getGameData(tree) :
+            Set<PointGameData> gameData = maxView ? game.getGameData(tree) :
                     game.getGameData(tree, player);
 
             Direction lastDirection = player == null ? Direction.NONE : player.getLastDirection();

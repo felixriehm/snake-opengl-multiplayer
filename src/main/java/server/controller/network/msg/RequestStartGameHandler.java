@@ -14,11 +14,13 @@ public class RequestStartGameHandler implements Runnable {
     private final ObjectOutputStream dos;
     private final Server server;
     private final Lock initGameLock;
+    private final UUID client;
 
-    public RequestStartGameHandler(ObjectOutputStream dos, Server server, Lock initGameLock){
+    public RequestStartGameHandler(ObjectOutputStream dos, Server server, Lock initGameLock, UUID client){
         this.dos = dos;
         this.server = server;
         this.initGameLock = initGameLock;
+        this.client = client;
     }
 
     @Override
@@ -38,6 +40,7 @@ public class RequestStartGameHandler implements Runnable {
         }
         server.setGame(new Game());
         server.getGame().init(gridSize, gridSize, server.getClients().keySet(), server);
+        server.getGame().setGameInitiator(client);
 
         server.broadcastInitGameMsg(server.getClients().size(), ClientGameState.GAME_ACTIVE);
         initGameLock.unlock();

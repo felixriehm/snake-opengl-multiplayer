@@ -1,0 +1,15 @@
+package common.game.model;
+
+public enum CheatCode {
+    PLAYER_GROW,
+    TOGGLE_UPDATE,
+    TOGGLE_MAX_VIEW,
+    TOGGLE_WORLD_EVENT,
+    PLAYER_KILL,
+    PLAYER_RESPAWN,
+    PLAYER_IMMORTAL,
+    GREAT_WALL_INCREASE,
+    GREAT_WALL_DECREASE,
+    FOOD_SPAWN,
+    FOOD_SHUFFLE
+}

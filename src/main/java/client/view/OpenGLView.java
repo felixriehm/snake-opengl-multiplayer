@@ -301,8 +301,48 @@ public class OpenGLView {
                 keysProcessed[GLFW_KEY_S] = true;
             }
             if (this.keys[GLFW_KEY_G] && !keysProcessed[GLFW_KEY_G]) {
-                networkManager.sendMessage(msgFactory.getCheatGrowMsg());
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.PLAYER_GROW));
                 keysProcessed[GLFW_KEY_G] = true;
+            }
+            if (this.keys[GLFW_KEY_V] && !keysProcessed[GLFW_KEY_V]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.TOGGLE_MAX_VIEW));
+                keysProcessed[GLFW_KEY_V] = true;
+            }
+            if (this.keys[GLFW_KEY_U] && !keysProcessed[GLFW_KEY_U]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.TOGGLE_UPDATE));
+                keysProcessed[GLFW_KEY_U] = true;
+            }
+            if (this.keys[GLFW_KEY_E] && !keysProcessed[GLFW_KEY_E]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.TOGGLE_WORLD_EVENT));
+                keysProcessed[GLFW_KEY_E] = true;
+            }
+            if (this.keys[GLFW_KEY_K] && !keysProcessed[GLFW_KEY_K]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.PLAYER_KILL));
+                keysProcessed[GLFW_KEY_K] = true;
+            }
+            if (this.keys[GLFW_KEY_R] && !keysProcessed[GLFW_KEY_R]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.PLAYER_RESPAWN));
+                keysProcessed[GLFW_KEY_R] = true;
+            }
+            if (this.keys[GLFW_KEY_I] && !keysProcessed[GLFW_KEY_I]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.PLAYER_IMMORTAL));
+                keysProcessed[GLFW_KEY_I] = true;
+            }
+            if (this.keys[GLFW_KEY_KP_ADD] && !keysProcessed[GLFW_KEY_KP_ADD]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.GREAT_WALL_INCREASE));
+                keysProcessed[GLFW_KEY_KP_ADD] = true;
+            }
+            if (this.keys[GLFW_KEY_KP_SUBTRACT] && !keysProcessed[GLFW_KEY_KP_SUBTRACT]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.GREAT_WALL_DECREASE));
+                keysProcessed[GLFW_KEY_KP_SUBTRACT] = true;
+            }
+            if (this.keys[GLFW_KEY_F] && !keysProcessed[GLFW_KEY_F]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.FOOD_SPAWN));
+                keysProcessed[GLFW_KEY_F] = true;
+            }
+            if (this.keys[GLFW_KEY_Q] && !keysProcessed[GLFW_KEY_Q]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.FOOD_SHUFFLE));
+                keysProcessed[GLFW_KEY_Q] = true;
             }
         }
 
