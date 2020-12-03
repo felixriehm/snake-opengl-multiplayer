@@ -30,14 +30,27 @@ public class RequestStartGameHandler implements Runnable {
             server.getGame().stopUpdate();
         }
 
-        int gridSize = (int) (Math.log(server.getClients().size()) * 10);
-        if(gridSize < 10) {
-            gridSize = 11;
+        // ensure that the grid is 2^n + 1 for diamond algorithm
+        List<Integer> values = new ArrayList();
+        for (int i = 4; i < 7; i++) {
+            values.add((int)Math.pow(2,i));
         }
-        // ensure that the grid is uneven for diamond algorithm
-        if(gridSize % 2 == 0) {
-            gridSize = gridSize + 1;
+
+        int scaleHelper = (int) (Math.log(server.getClients().size()) * 10);
+        int gridSize = 0;
+        for (int i = values.size() - 1; i >= 0; i--) {
+            if(scaleHelper > values.get(i)){
+                gridSize = values.get(i);
+                break;
+            }
         }
+
+        if(gridSize < 16) {
+            gridSize = 8;
+        }
+
+        gridSize = gridSize + 1;
+
         server.setGame(new Game());
         server.getGame().init(gridSize, gridSize, server.getClients().keySet(), server);
         server.getGame().setGameInitiator(client);

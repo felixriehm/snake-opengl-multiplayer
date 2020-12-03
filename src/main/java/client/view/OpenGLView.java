@@ -59,6 +59,10 @@ public class OpenGLView {
             Float.parseFloat(Configuration.getInstance().getProperty("game.wall.color.r")),
             Float.parseFloat(Configuration.getInstance().getProperty("game.wall.color.g")),
             Float.parseFloat(Configuration.getInstance().getProperty("game.wall.color.b")));
+    public final Vector3f RUIN_COLOR = new Vector3f(
+            Float.parseFloat(Configuration.getInstance().getProperty("game.ruin.color.r")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.ruin.color.g")),
+            Float.parseFloat(Configuration.getInstance().getProperty("game.ruin.color.b")));
     private IPrimitiveRenderer squareRenderer;
     private IPrimitiveRenderer triangleRenderer;
     private IPrimitiveRenderer circleRenderer;
@@ -233,6 +237,14 @@ public class OpenGLView {
                                 WALL_COLOR
                         );
                     }
+                    if(point instanceof PointRuin) {
+                        triangleRenderer.draw(
+                                new Vector2f(point.getX() * cellSize + cellSize/2, point.getY() * cellSize + cellSize/2),
+                                new Vector2f(cellSize, cellSize),
+                                0f,
+                                RUIN_COLOR
+                        );
+                    }
                 }
             }
 
@@ -307,6 +319,10 @@ public class OpenGLView {
             if (this.keys[GLFW_KEY_V] && !keysProcessed[GLFW_KEY_V]) {
                 networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.TOGGLE_MAX_VIEW));
                 keysProcessed[GLFW_KEY_V] = true;
+            }
+            if (this.keys[GLFW_KEY_B] && !keysProcessed[GLFW_KEY_B]) {
+                networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.TOGGLE_DISCOVERED_VIEW));
+                keysProcessed[GLFW_KEY_B] = true;
             }
             if (this.keys[GLFW_KEY_U] && !keysProcessed[GLFW_KEY_U]) {
                 networkManager.sendMessage(msgFactory.getCheatGrowMsg(CheatCode.TOGGLE_UPDATE));

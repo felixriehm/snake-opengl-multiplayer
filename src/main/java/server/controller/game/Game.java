@@ -11,7 +11,9 @@ import server.Server;
 import server.model.game.entity.Food;
 import server.model.game.entity.Player;
 import server.controller.network.ClientManager;
+import server.model.game.entity.Ruin;
 import server.model.game.entity.Wall;
+import server.util.DiamondSquare;
 import server.util.QuadTree;
 
 import java.net.ServerSocket;
@@ -34,6 +36,7 @@ public class Game {
     private HashMap<UUID, Player> players = new HashMap<UUID, Player>();
     private Food food;
     private Wall wall;
+    private Ruin ruins;
     private MsgFactory msgFactory;
     private Server server;
     private Game gameReference;
@@ -91,11 +94,16 @@ public class Game {
                 freeCells.remove(new Vector2f(x,y));
             }
         }
-        clients.forEach(clientId -> this.players.put(clientId, new Player(freeCells)));
 
         wall = new Wall();
         wall.initGreatWall(0,0, gridX, gridY);
+        ruins = new Ruin();
+        ruins.initRuins(gridX);
         this.availableGridCells.removeAll(wall.getGreatWall());
+        this.availableGridCells.removeAll(ruins.getGeneratedRuins());
+
+        freeCells.retainAll(availableGridCells);
+        clients.forEach(clientId -> this.players.put(clientId, new Player(freeCells)));
 
         // spawn food, needs to happen after Player init
         food = new Food(this.availableGridCells);
@@ -169,6 +177,9 @@ public class Game {
             if(point instanceof PointWall){
                 newPoints.add(new PointWall(point.getX() - viewEdgeToGridEdgeDistanceX, point.getY() - viewEdgeToGridEdgeDistanceY));
             }
+            if(point instanceof PointRuin){
+                newPoints.add(new PointRuin(point.getX() - viewEdgeToGridEdgeDistanceX, point.getY() - viewEdgeToGridEdgeDistanceY));
+            }
             if(point instanceof PointSnake){
                 PointSnake pointSnake = (PointSnake) point;
                 newPoints.add(new PointSnake(point.getX() - viewEdgeToGridEdgeDistanceX,
@@ -181,27 +192,52 @@ public class Game {
         return newPoints;
     }
 
-    private Set<PointGameData> getPlayerView(QuadTree.PointRegionQuadTree tree, Player player) {
+    public void saveDiscoveredRuins(QuadTree.PointRegionQuadTree<QuadTree.XYPointGameData> tree, Player player) {
+        int playerGridX = calculatePlayerGrid(player);
+        int playerGridY = playerGridX;
+        Vector2f head = player.getSnakeHead();
+        int snakeLength = player.getSnakeBody().size();
+        for (QuadTree.XYPointGameData point : tree
+                .queryRange(getActualViewDistanceX(head, snakeLength), getActualViewDistanceY(head, snakeLength),
+                        playerGridX, playerGridY)) {
+            Object pointGameData = point.getData();
+            if (pointGameData instanceof PointRuin) {
+                player.discoverRuin(new Vector2f((float) point.getX(), (float) point.getY()));
+            }
+        }
+    }
+
+    private Set<PointGameData> getPlayerView(QuadTree.PointRegionQuadTree<QuadTree.XYPointGameData> tree, Player player) {
         int playerGridX = calculatePlayerGrid(player);
         int playerGridY = playerGridX;
         Set<PointGameData> points = new HashSet<>();
         Vector2f head = player.getSnakeHead();
         int snakeLength = player.getSnakeBody().size();
-        points = (Set<PointGameData>) tree
+        for(QuadTree.XYPointGameData point : tree
                 .queryRange(getActualViewDistanceX(head, snakeLength), getActualViewDistanceY(head, snakeLength),
-                        playerGridX, playerGridY)
-                .stream().map(point -> ((QuadTree.XYPointGameData)point).getData())
-                .collect(Collectors.toSet());
+                        playerGridX, playerGridY)) {
+            points.add((PointGameData) point.getData());
+        }
         return points;
     }
 
-    private Set<PointGameData> getPlayerView(QuadTree.PointRegionQuadTree tree) {
+    private Set<PointGameData> getPlayerView(QuadTree.PointRegionQuadTree<QuadTree.XYPointGameData> tree) {
         Set<PointGameData> points = new HashSet<>();
-        points = (Set<PointGameData>) tree
-                .queryRange(0, 0,
-                        GridX, GridY)
-                .stream().map(point -> ((QuadTree.XYPointGameData)point).getData())
-                .collect(Collectors.toSet());
+        Player playerGameInitiator = players.get(gameInitiator);
+
+        for(QuadTree.XYPointGameData point : tree.queryRange(0, 0, GridX, GridY)) {
+            Object pointGameData = point.getData();
+            if(!isCheatCodeActivated(CheatCode.TOGGLE_DISCOVERED_VIEW)) {
+                boolean isPointRuin = pointGameData instanceof PointRuin;
+                if(!isPointRuin || (isPointRuin && playerGameInitiator != null &&
+                        playerGameInitiator.getDiscoveredRuins()
+                        .contains(new Vector2f((float)point.getX(), (float)point.getY())))) {
+                    points.add((PointGameData) point.getData());
+                }
+            } else {
+                points.add((PointGameData) point.getData());
+            }
+        }
         return points;
     }
 
@@ -223,6 +259,10 @@ public class Game {
 
         for(Vector2f wall : wall.getGreatWall()) {
             tree.insertGameData(wall.x, wall.y, new PointWall(wall.x, wall.y));
+        }
+
+        for(Vector2f ruin : ruins.getGeneratedRuins()) {
+            tree.insertGameData(ruin.x, ruin.y, new PointRuin(ruin.x, ruin.y));
         }
 
         return tree;
@@ -335,6 +375,11 @@ public class Game {
         // add all wall cells
         for (Vector2f point : wall.getGreatWall()){
             tree.insertGameData(point.x, point.y , new PointWall(point.x, point.y));
+        }
+
+        // add all ruins cells
+        for (Vector2f point : ruins.getGeneratedRuins()){
+            tree.insertGameData(point.x, point.y , new PointRuin(point.x, point.y));
         }
 
         // add all snake cells and do hit detection

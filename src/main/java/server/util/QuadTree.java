@@ -9,6 +9,8 @@ import java.util.*;
  * A quadtree is a tree data structure in which each internal node has exactly four children. Quadtrees
  * are most often used to partition a two dimensional space by recursively subdividing it into four
  * quadrants or regions. The regions may be square or rectangular, or may have arbitrary shapes.
+ * Source: https://github.com/phishman3579/java-algorithms-implementation/blob/master/src/com/jwetherell/algorithms/
+ * data_structures/QuadTree.java.
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Quadtree">QuadTree (Wikipedia)</a>
  * <br>

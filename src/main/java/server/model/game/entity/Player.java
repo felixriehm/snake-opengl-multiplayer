@@ -13,6 +13,7 @@ public class Player {
 
     Vector2f lastSegmentOfLastMove;
     LinkedList<Vector2f> body = new LinkedList();
+    Set<Vector2f> discoveredRuins = new HashSet<>();
     Direction nextDirection;
     Direction lastDirection;
 
@@ -30,8 +31,8 @@ public class Player {
             if (i == item){
                 this.body.addFirst(cell);
                 // spawn safe zone around the player
-                for (float x = cell.x - 2; x <= cell.x + 2; x++) {
-                    for (float y = cell.y - 2; y <= cell.y + 2; y++) {
+                for (float x = cell.x - 1; x <= cell.x + 1; x++) {
+                    for (float y = cell.y - 1; y <= cell.y + 1; y++) {
                         freeCells.remove(new Vector2f(x,y));
                     }
                 }
@@ -121,6 +122,14 @@ public class Player {
             // normal behaviour
             this.body.add(this.lastSegmentOfLastMove);
         }
+    }
+
+    public void discoverRuin(Vector2f ruin) {
+        this.discoveredRuins.add(ruin);
+    }
+
+    public Set<Vector2f> getDiscoveredRuins() {
+        return discoveredRuins;
     }
 
     @Override

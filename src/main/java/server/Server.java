@@ -107,8 +107,13 @@ public class Server <T extends BaseMsg>  {
 
         this.clients.entrySet().forEach(client -> {
             Player player = game.getPlayers().get(client.getKey());
+            if(player != null) {
+                game.saveDiscoveredRuins(tree,player);
+            }
+
             boolean maxView = player == null ||
-                    (game.isCheatCodeActivated(TOGGLE_MAX_VIEW) && client.getKey().equals(game.getGameInitiator()));
+                    (game.isCheatCodeActivated(TOGGLE_MAX_VIEW) && client.getKey().equals(game.getGameInitiator())) ||
+                    !client.getKey().equals(game.getGameInitiator());
             int playerGridX = maxView ? game.getGridX() : game.calculatePlayerGrid(player);
             int playerGridY = playerGridX;
 

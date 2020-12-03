@@ -16,7 +16,8 @@ public class MsgFactory {
         this.networkId = networkId;
     }
 
-    public GameUpdateMsg getGameEntitiesMsg(Set<PointGameData> gameData, Direction direction, int gridX, int gridY, int worldEventCountdown){
+    public GameUpdateMsg getGameEntitiesMsg(Set<PointGameData> gameData, Direction direction, int gridX, int gridY,
+                                            int worldEventCountdown){
 
         return new GameUpdateMsg(gameData, direction, networkId, gridX, gridY, worldEventCountdown);
     }

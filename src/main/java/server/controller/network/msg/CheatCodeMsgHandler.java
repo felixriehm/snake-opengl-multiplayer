@@ -39,6 +39,7 @@ public class CheatCodeMsgHandler implements Runnable {
                 case TOGGLE_UPDATE:
                 case TOGGLE_WORLD_EVENT:
                 case TOGGLE_MAX_VIEW:
+                case TOGGLE_DISCOVERED_VIEW:
                 case PLAYER_IMMORTAL:
                     game.toogleCheatCode(cheatCode);
                     break;

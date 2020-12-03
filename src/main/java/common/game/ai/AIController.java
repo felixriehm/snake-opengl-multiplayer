@@ -7,7 +7,7 @@ import java.util.*;
 
 public class AIController {
 
-    public Direction getNextMove(Set<Vector2f> food, Set<Vector2f> walls, Set<Vector2f> enemies,
+    public Direction getNextMove(Set<Vector2f> food, Set<Vector2f> walls, Set<Vector2f> ruins, Set<Vector2f> enemies,
                                  Set<Vector2f> playerBody, Vector2f playerHead, Direction lastPlayerDirection,
                                  int gridX, int gridY, int worldEventCountdown){
         Direction nextDirection = Direction.LEFT;
@@ -53,7 +53,8 @@ public class AIController {
         possibleMoves.add(Direction.DOWN);
         possibleMoves.add(Direction.LEFT);
         while(walls.contains(nextDirection.nextPosition(playerHead)) || nextDirection == lastPlayerDirection.opposite() ||
-                enemies.contains(nextDirection.nextPosition(playerHead)) || playerBody.contains(nextDirection.nextPosition(playerHead)) ){
+                enemies.contains(nextDirection.nextPosition(playerHead)) || playerBody.contains(nextDirection.nextPosition(playerHead)) ||
+                ruins.contains(nextDirection.nextPosition(playerHead))){
             notValid.add(nextDirection);
             possibleMoves.removeAll(notValid);
             if(possibleMoves.isEmpty()) {
