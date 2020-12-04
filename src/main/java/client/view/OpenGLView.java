@@ -219,6 +219,17 @@ public class OpenGLView {
                                 0f,
                                 generatePlayerColor(pointSnake.getUuid())
                         );
+
+                        if(!pointSnake.getUuid().equals(networkManager.getId())) {
+                            RGBColor c = pointSnake.getColor();
+                            squareRenderer.draw(
+                                    new Vector2f(point.getX() * cellSize + cellSize/2 - cellSize/8,
+                                            point.getY() * cellSize + cellSize/2 - cellSize/8),
+                                    new Vector2f(cellSize/4, cellSize/4),
+                                    0f,
+                                    new Vector3f((float)c.getR(), (float)c.getG(), (float)c.getB())
+                            );
+                        }
                     }
                     if(point instanceof PointFood) {
                         circleRenderer.draw(

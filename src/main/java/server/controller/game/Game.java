@@ -1,5 +1,6 @@
 package server.controller.game;
 
+import com.sun.javafx.util.Utils;
 import common.Configuration;
 import common.game.model.*;
 import common.network.MsgFactory;
@@ -13,10 +14,8 @@ import server.model.game.entity.Player;
 import server.controller.network.ClientManager;
 import server.model.game.entity.Ruin;
 import server.model.game.entity.Wall;
-import server.util.DiamondSquare;
 import server.util.QuadTree;
 
-import java.net.ServerSocket;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -103,7 +102,11 @@ public class Game {
         this.availableGridCells.removeAll(ruins.getGeneratedRuins());
 
         freeCells.retainAll(availableGridCells);
-        clients.forEach(clientId -> this.players.put(clientId, new Player(freeCells)));
+        Object[] clientsUuid = clients.toArray();
+        for (int i = 0; i < clients.size(); i++) {
+            double[] c = Utils.HSBtoRGB((double)360/clients.size() * i, 1.0, 1.0);
+            this.players.put((UUID) clientsUuid[i], new Player(freeCells, new RGBColor(c[0], c[1], c[2])));
+        }
 
         // spawn food, needs to happen after Player init
         food = new Food(this.availableGridCells);
@@ -183,7 +186,7 @@ public class Game {
             if(point instanceof PointSnake){
                 PointSnake pointSnake = (PointSnake) point;
                 newPoints.add(new PointSnake(point.getX() - viewEdgeToGridEdgeDistanceX,
-                        point.getY() - viewEdgeToGridEdgeDistanceY, pointSnake.getUuid(), pointSnake.isHead()));
+                        point.getY() - viewEdgeToGridEdgeDistanceY, pointSnake.getUuid(), pointSnake.isHead(), pointSnake.getColor()));
             }
             if(point instanceof PointFood){
                 newPoints.add(new PointFood(point.getX() - viewEdgeToGridEdgeDistanceX, point.getY() - viewEdgeToGridEdgeDistanceY));
@@ -245,11 +248,12 @@ public class Game {
         QuadTree.PointRegionQuadTree tree = new QuadTree.PointRegionQuadTree(0, 0, GridX , GridY);
 
         for(Map.Entry<UUID, Player> entry : this.players.entrySet()) {
-            List<Vector2f> snake = entry.getValue().getSnakeBody();
+            Player player = entry.getValue();
+            List<Vector2f> snake = player.getSnakeBody();
             for (int i = 0; i < snake.size(); i++) {
                 Vector2f point = snake.get(i);
                 tree.insertGameData(point.x, point.y, new PointSnake(point.x,
-                        point.y, entry.getKey(), i == 0));
+                        point.y, entry.getKey(), i == 0, player.getColor()));
             }
         }
 
@@ -384,11 +388,13 @@ public class Game {
 
         // add all snake cells and do hit detection
         for(Map.Entry<UUID, Player> player : players.entrySet() ) {
-            List<Vector2f> snake = player.getValue().getSnakeBody();
+            Player p = player.getValue();
+            List<Vector2f> snake = p.getSnakeBody();
             // loop must be inverted so that self hit detection works
             for (int i = snake.size() - 1; i >= 0; i--) {
                 Vector2f cell = snake.get(i);
-                Pair<QuadTree.XYPointGameData, Boolean> tupel = tree.insertGameData(cell.x, cell.y, new PointSnake(cell.x, cell.y, player.getKey(), i == 0));
+                Pair<QuadTree.XYPointGameData, Boolean> tupel = tree.insertGameData(cell.x, cell.y,
+                        new PointSnake(cell.x, cell.y, player.getKey(), i == 0, p.getColor()));
                 boolean inserted = tupel.getValue();
                 QuadTree.XYPointGameData point = tupel.getKey();
                 if(point != null){

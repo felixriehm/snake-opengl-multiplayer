@@ -1,6 +1,7 @@
 package server.model.game.entity;
 
 import common.game.model.Direction;
+import common.game.model.RGBColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Random;
@@ -16,9 +17,11 @@ public class Player {
     Set<Vector2f> discoveredRuins = new HashSet<>();
     Direction nextDirection;
     Direction lastDirection;
+    RGBColor color;
 
-    public Player(Set<Vector2f> freeCells) {
+    public Player(Set<Vector2f> freeCells, RGBColor color) {
         this.nextDirection = Direction.NONE;
+        this.color = color;
 
         int size = freeCells.size();
         if(size == 0){
@@ -130,6 +133,10 @@ public class Player {
 
     public Set<Vector2f> getDiscoveredRuins() {
         return discoveredRuins;
+    }
+
+    public RGBColor getColor() {
+        return color;
     }
 
     @Override
