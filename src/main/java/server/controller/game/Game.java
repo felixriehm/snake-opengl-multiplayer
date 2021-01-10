@@ -23,6 +23,7 @@ public class Game {
     private static final Logger logger = LogManager.getLogger(Game.class.getName());
 
     public static final int GAME_UPDATE_RATE = Integer.parseInt(Configuration.getInstance().getProperty("game.update-rate"));
+    public static final int GAME_FOOD_AMOUNT = Integer.parseInt(Configuration.getInstance().getProperty("game.food-amount"));
     public static final int GAME_WORLD_EVENT_COUNTDOWN = Integer.parseInt(Configuration.getInstance().getProperty("game.world-event.countdown"));
     public static final int GAME_WORLD_EVENT_GRID_DECREASE = Integer.parseInt(Configuration.getInstance().getProperty("game.world-event.grid-decrease"));
     public static final boolean GAME_WORLD_EVENT_ENABLED = Boolean.parseBoolean(Configuration.getInstance().getProperty("game.world-event.enabled"));
@@ -110,7 +111,9 @@ public class Game {
 
         // spawn food, needs to happen after Player init
         food = new Food(this.availableGridCells);
-        food.spawnFood(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
+        for (int i = 0; i < GAME_FOOD_AMOUNT; i++) {
+            food.spawnFood(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
+        }
 
         this.updateTimer = new Timer();
         updateTimer.scheduleAtFixedRate(new TimerTask() {
@@ -406,11 +409,18 @@ public class Game {
                             PointSnake pointSnake = ((PointSnake) data);
                             if(pointSnake.isHead()) {
                                 removedPlayer.add(pointSnake.getUuid());
+                                continue;
                             }
+                        }
+                        // body of this player is inside of a wall
+                        if (data instanceof PointWall) {
+                            removedPlayer.add(player.getKey());
+                            continue;
                         }
                         // head of this player is inside another player or itself or wall
                         if (i == 0) {
                             removedPlayer.add(player.getKey());
+                            continue;
                         }
                     }
                 } // else: this player is outside of the grid
@@ -452,7 +462,6 @@ public class Game {
     }
 
     public int calculatePlayerGrid(Player player){
-        //TODO: only when ...
         return player.getSnakeBody().size()*2 + Game.PLAYER_VIEW_DISTANCE*2 - 1;
     }
 
@@ -522,13 +531,5 @@ public class Game {
 
     public void respawnPlayer(UUID player) {
         //TODO: implement
-        /*
-        Set<Vector2f> freeCells = new HashSet<Vector2f>(availableGridCells);
-
-        freeCells.removeAll(this.players.entrySet().stream().map(entry -> entry.getValue()).collect(Collectors.toSet()));
-        this.players.put(player, new Player(freeCells));
-        ((ClientManager) server.getClients().get(player)).sendMessage(msgFactory.getGameStateMsg(ClientGameState.GAME_ACTIVE));
-        logger.debug(this.players.values());
-        */
     }
 }
